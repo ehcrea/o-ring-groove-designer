@@ -71,9 +71,14 @@
     const X = (x) => x0 + (x + ext) * k; // world x (0 = groove left wall) to px
     const Y = (y) => yB - y * k; // world y (0 = groove bottom, up = towards mating part)
 
-    // grooved part with the groove notch (bottom corner radius r)
+    // grooved part with the groove notch (bottom corner radius r); a dovetail widens towards the bottom
     const r = Math.min(p.r || 0, p.G / 2, F) * k;
-    const gp = [
+    const u = p.undercut || 0;
+    const gp = u > 0 ? [
+      `M${f1(X(-ext))} ${f1(Y(-baseT))}`, `V${f1(Y(F))}`, `H${f1(X(0))}`,
+      `L${f1(X(-u))} ${f1(Y(0))}`, `H${f1(X(p.G + u))}`, `L${f1(X(p.G))} ${f1(Y(F))}`,
+      `H${f1(X(p.G + ext))}`, `V${f1(Y(-baseT))}`, 'Z',
+    ].join('') : [
       `M${f1(X(-ext))} ${f1(Y(-baseT))}`, `V${f1(Y(F))}`, `H${f1(X(0))}`, `V${f1(Y(0) - r)}`,
       r > 0 ? `Q${f1(X(0))} ${f1(Y(0))} ${f1(X(0) + r)} ${f1(Y(0))}` : '',
       `H${f1(X(p.G) - r)}`,
@@ -97,9 +102,10 @@
       h = p.L;
       w = h + Math.max(0, (p.area - Math.PI / 4 * h * h) / h);
     } else { w = h = p.csEff; }
-    const over = w > p.G;
-    w = Math.min(w, p.G);
-    const ox = right ? p.G - w : 0;
+    const room = p.G + 2 * u;
+    const over = w > room;
+    w = Math.min(w, room);
+    const ox = p.centred ? (p.G - w) / 2 : right ? p.G - w : 0;
     svg.appendChild(el('rect', {
       class: 'oring', x: f1(X(ox)), y: f1(Y(h)), width: f1(w * k), height: f1(h * k),
       rx: f1(Math.min(w, h) / 2 * k), ry: f1(Math.min(w, h) / 2 * (over ? 0.6 : 1) * k),
@@ -110,7 +116,7 @@
 
     // pressure arrow
     const ay = Y(h / 2);
-    if (right) arrow(svg, X(-ext * 0.9), ay, X(-ext * 0.15), p.labels.pressure);
+    if (p.centred) { /* dovetail: no pressure direction */ } else if (right) arrow(svg, X(-ext * 0.9), ay, X(-ext * 0.15), p.labels.pressure);
     else arrow(svg, X(p.G + ext * 0.9), ay, X(p.G + ext * 0.15), p.labels.pressure);
 
     // dimensions
@@ -149,10 +155,10 @@
     if (!o || !i) return;
     const oL = o.D || o.L, oW = o.D || o.W;
     if (!(oL > 0 && oW > 0)) return;
-    const k = Math.min((W - 110) / oL, (Hmax - 70) / oW);
+    const k = Math.min((W - 170) / oL, (Hmax - 70) / oW);
     const H = oW * k + 70;
     const svg = el('svg', { viewBox: `0 0 ${W} ${f1(H)}`, role: 'img', 'aria-label': p.labels.title });
-    const cx = W / 2, cy = 26 + oW * k / 2;
+    const cx = W / 2 - 20, cy = 26 + oW * k / 2;
     const shape = (s, cls, extra = {}) => {
       if (s.D !== undefined) return el('circle', Object.assign({ class: cls, cx: f1(cx), cy: f1(cy), r: f1(Math.max(0, s.D) / 2 * k) }, extra));
       return el('path', Object.assign({ class: cls, d: rrPath(cx, cy, Math.max(0, s.L) * k, Math.max(0, s.W) * k, Math.max(0, s.R) * k) }, extra));
@@ -193,5 +199,40 @@
     host.appendChild(svg);
   }
 
-  root.Drawing = { section, plan };
+  /** Schematic of a straight-thread boss port with the O-ring in the conical seat (not to scale). */
+  function boss(host, p) {
+    host.textContent = '';
+    const W = 440, H = 250;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': p.labels.title });
+    hatchDefs(svg, 'hatch-b');
+    // port body (section, left half shown mirrored on both sides of the axis)
+    const port = (sgn) => {
+      const cx = W / 2, x = (v) => f1(cx + sgn * v);
+      return `M${x(200)} 110H${x(78)}L${x(60)} 136V240H${x(200)}Z`;
+    };
+    for (const sg of [-1, 1]) {
+      svg.appendChild(el('path', { class: 'metal', d: port(sg) }));
+      svg.appendChild(el('path', { d: port(sg), fill: 'url(#hatch-b)', stroke: 'none' }));
+    }
+    // fitting: hex shoulder on top, undercut and threaded stem going down
+    const fit = `M${W / 2 - 120} 40H${W / 2 + 120}V100H${W / 2 + 52}V118H${W / 2 + 58}V240H${W / 2 - 58}V118H${W / 2 - 52}V100H${W / 2 - 120}Z`;
+    svg.appendChild(el('path', { class: 'metal', d: fit, opacity: 0.85 }));
+    // thread hint
+    for (let y = 146; y < 236; y += 10) {
+      svg.appendChild(el('line', { class: 'dim', x1: W / 2 - 60, y1: y, x2: W / 2 - 56, y2: y + 5 }));
+      svg.appendChild(el('line', { class: 'dim', x1: W / 2 + 56, y1: y, x2: W / 2 + 60, y2: y + 5 }));
+    }
+    // O-rings in the cone between undercut and seat
+    for (const sg of [-1, 1]) svg.appendChild(el('ellipse', { class: 'oring', cx: f1(W / 2 + sg * 64), cy: 112, rx: 10, ry: 9 }));
+    svg.appendChild(el('line', { class: 'axis', x1: W / 2, y1: 30, x2: W / 2, y2: 246 }));
+    const tx = (x, y, txt, a = 'start') => svg.appendChild(el('text', { class: 'dim-text', x, y, 'text-anchor': a }, txt));
+    tx(W / 2 - 116, 58, p.labels.fitting);
+    tx(W / 2 + 196, 230, p.labels.port, 'end');
+    tx(W / 2 + 80, 132, p.labels.cone);
+    tx(W / 2 - 80, 132, p.labels.oring, 'end');
+    tx(W / 2 + 64, 196, p.thread);
+    host.appendChild(svg);
+  }
+
+  root.Drawing = { section, plan, boss };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -192,9 +192,40 @@
       SIZES.push({ series: 'ISO3601', code: `${id} × ${cs.toFixed(2)}`, id, idTol, cs, csTol });
     }
   }
+  /*
+   * AS568 -9xx boss seals for straight-thread tube fittings, with port (boss)
+   * and fitting-end dimensions, inches. Source: ERIKS O-ring Technical
+   * Handbook §12 D (boss dimensions; fitting end per MS33656).
+   * ring: [dash, CS, CS tol, ID, ID tol, tube OD]
+   * port: J min. full-thread depth, D min., U Ø (+.005), K depth (+.015), Y min., P min., Z cone angle (°), O min.
+   * fitting: F undercut Ø (+.002/−.003), D max., U Ø (+.010), K (+.015)
+   */
+  const BOSS_IN = [
+    { dash: 902, cs: .064, csTol: .003, id: .239, idTol: .005, tube: '1/8', thread: '5/16-24 UNF-2B', port: { J: .390, D: .062, U: .358, K: .074, Y: .672, P: .468, Z: 12, O: .438 }, fit: { F: .250, D: .005, U: .549, K: .063 } },
+    { dash: 903, cs: .064, csTol: .003, id: .301, idTol: .005, tube: '3/16', thread: '3/8-24 UNF-2B', port: { J: .390, D: .125, U: .421, K: .074, Y: .750, P: .468, Z: 12, O: .500 }, fit: { F: .312, D: .005, U: .611, K: .063 } },
+    { dash: 904, cs: .072, csTol: .003, id: .351, idTol: .005, tube: '1/4', thread: '7/16-20 UNF-2B', port: { J: .454, D: .172, U: .487, K: .093, Y: .828, P: .547, Z: 12, O: .563 }, fit: { F: .364, D: .005, U: .674, K: .075 } },
+    { dash: 905, cs: .072, csTol: .003, id: .414, idTol: .005, tube: '5/16', thread: '1/2-20 UNF-2B', port: { J: .454, D: .234, U: .550, K: .093, Y: .906, P: .547, Z: 12, O: .625 }, fit: { F: .426, D: .005, U: .736, K: .075 } },
+    { dash: 906, cs: .078, csTol: .003, id: .468, idTol: .005, tube: '3/8', thread: '9/16-18 UNF-2B', port: { J: .500, D: .297, U: .616, K: .097, Y: .909, P: .609, Z: 12, O: .688 }, fit: { F: .481, D: .005, U: .799, K: .083 } },
+    { dash: 908, cs: .087, csTol: .003, id: .644, idTol: .009, tube: '1/2', thread: '3/4-16 UNF-2B', port: { J: .562, D: .391, U: .811, K: .100, Y: 1.188, P: .688, Z: 15, O: .875 }, fit: { F: .660, D: .005, U: .986, K: .094 } },
+    { dash: 910, cs: .097, csTol: .003, id: .755, idTol: .009, tube: '5/8', thread: '7/8-14 UNF-2B', port: { J: .656, D: .484, U: .942, K: .100, Y: 1.344, P: .781, Z: 15, O: 1.000 }, fit: { F: .773, D: .005, U: 1.111, K: .107 } },
+    { dash: 912, cs: .116, csTol: .004, id: .924, idTol: .009, tube: '3/4', thread: '1 1/16-12 UN-2B', port: { J: .750, D: .609, U: 1.148, K: .130, Y: 1.625, P: .906, Z: 15, O: 1.250 }, fit: { F: .945, D: .008, U: 1.361, K: .125 } },
+    { dash: 914, cs: .116, csTol: .004, id: 1.047, idTol: .010, tube: '7/8', thread: '1 3/16-12 UN-2B', port: { J: .750, D: .719, U: 1.273, K: .130, Y: 1.765, P: .906, Z: 15, O: 1.375 }, fit: { F: 1.070, D: .008, U: 1.475, K: .125 } },
+    { dash: 916, cs: .116, csTol: .004, id: 1.171, idTol: .010, tube: '1', thread: '1 5/16-12 UN-2B', port: { J: .750, D: .844, U: 1.398, K: .130, Y: 1.910, P: .906, Z: 15, O: 1.500 }, fit: { F: 1.195, D: .008, U: 1.599, K: .125 } },
+    { dash: 920, cs: .118, csTol: .004, id: 1.475, idTol: .014, tube: '1 1/4', thread: '1 5/8-12 UN-2B', port: { J: .750, D: 1.078, U: 1.713, K: .132, Y: 2.270, P: .906, Z: 15, O: 1.875 }, fit: { F: 1.507, D: .008, U: 1.849, K: .125 } },
+    { dash: 924, cs: .118, csTol: .004, id: 1.720, idTol: .014, tube: '1 1/2', thread: '1 7/8-12 UN-2B', port: { J: .750, D: 1.312, U: 1.962, K: .132, Y: 2.560, P: .906, Z: 15, O: 2.125 }, fit: { F: 1.756, D: .008, U: 2.095, K: .125 } },
+    { dash: 932, cs: .118, csTol: .004, id: 2.337, idTol: .018, tube: '2', thread: '2 1/2-12 UN-2B', port: { J: .750, D: 1.781, U: 2.587, K: .132, Y: 3.480, P: .906, Z: 15, O: 2.750 }, fit: { F: 2.381, D: .008, U: 2.718, K: .125 } },
+  ];
+  for (const b of BOSS_IN) {
+    SIZES.push({
+      series: 'BOSS', code: '-' + b.dash, id: r3(b.id * IN), idTol: r3(b.idTol * IN), cs: r3(b.cs * IN), csTol: r3(b.csTol * IN),
+      inch: { id: b.id, idTol: b.idTol, cs: b.cs, csTol: b.csTol }, boss: b,
+    });
+  }
+
   const SERIES = {
     AS568: { name: 'AS568 (inch)', note: 'SAE AS568 · ISO 3601-1 series A inch sizes' },
     ISO3601: { name: 'ISO 3601-1 G (metric)', note: 'ISO 3601-1 series G, general industrial' },
+    BOSS: { name: 'AS568 boss seals (-9xx)', note: 'AS568 -9xx for straight-thread tube fittings' },
   };
 
   /*
@@ -263,6 +294,17 @@
       { cs: 0.210, L: [0.185, 0.188], sq: [8, 14], E: [0.003, 0.006], G: [[0.281, 0.286], [0.311, 0.316], [0.410, 0.415]], R: [0.020, 0.035], ecc: 0.004 },
       { cs: 0.275, L: [0.237, 0.240], sq: [11, 16], E: [0.004, 0.007], G: [[0.375, 0.380], [0.408, 0.413], [0.538, 0.543]], R: [0.020, 0.035], ecc: 0.005 },
     ],
+    // Design Chart 4-4, dovetail grooves: G = groove width at the opening (to sharp corner),
+    // R = radius at the opening edges (critical), R1 = bottom radius; side walls 66° to the bottom (24° undercut)
+    dovetail: [
+      { cs: 0.070, L: [0.053, 0.055], sq: [23, 23], G: [0.057, 0.061], R: [0.005, 0.005], R1: 1 / 64 },
+      { cs: 0.103, L: [0.081, 0.083], sq: [21, 21], G: [0.083, 0.087], R: [0.010, 0.010], R1: 1 / 64 },
+      { cs: 0.139, L: [0.111, 0.113], sq: [20, 20], G: [0.113, 0.117], R: [0.010, 0.010], R1: 1 / 32 },
+      { cs: 0.210, L: [0.171, 0.173], sq: [18, 18], G: [0.171, 0.175], R: [0.015, 0.015], R1: 1 / 32 },
+      { cs: 0.275, L: [0.231, 0.234], sq: [16, 16], G: [0.231, 0.235], R: [0.015, 0.015], R1: 1 / 16 },
+      { cs: 0.375, L: [0.315, 0.319], sq: [16, 16], G: [0.315, 0.319], R: [0.020, 0.020], R1: 3 / 32 },
+    ],
+    dovetailAngle: 24,
     // Design Chart 5-2-b, industrial dynamic metric cross-sections (mm): [cs, L, G (no back-up), R min, R max]
     dynamicMetricMm: [
       [1.50, 1.30, 1.90, 0.2, 0.4], [1.80, 1.45, 2.40, 0.2, 0.4], [2.00, 1.70, 2.60, 0.2, 0.4], [2.50, 2.10, 3.30, 0.2, 0.4],
@@ -331,6 +373,16 @@
       [8.00, 0.15, 6.92, 0.05, 0.18, 10.90, 1.0, 0.13], [8.40, 0.15, 7.27, 0.05, 0.18, 11.45, 1.0, 0.13], [9.00, 0.20, 7.92, 0.05, 0.18, 12.10, 1.0, 0.13],
       [10.0, 0.20, 8.80, 0.05, 0.18, 13.40, 1.0, 0.13],
     ],
+    // Table 3.C-3, dovetail grooves (metric, tolerances ±0.05, angle ±1°):
+    // [cs, depth E, width at opening F, side wall angle °, R1 machining radius (bottom), R2 size radius (opening edge)]
+    dovetail: [
+      [3.00, 2.40, 2.70, 29, 0.25, 0.25], [3.53, 2.80, 3.15, 28, 0.25, 0.25], [4.00, 3.20, 3.60, 32, 0.80, 0.25],
+      [4.50, 3.65, 4.05, 28, 0.80, 0.25], [5.00, 4.15, 4.50, 24, 0.80, 0.25], [5.33, 4.40, 4.80, 24, 0.80, 0.25],
+      [5.50, 4.60, 4.95, 24, 0.80, 0.40], [5.70, 4.80, 5.15, 23, 0.80, 0.40], [6.00, 5.05, 5.40, 25, 1.15, 0.40],
+      [6.50, 5.50, 5.85, 24, 1.15, 0.40], [7.00, 5.95, 6.30, 23, 1.50, 0.50], [7.50, 6.40, 6.55, 24, 1.50, 0.50],
+      [8.00, 6.85, 7.05, 24, 1.50, 0.50], [8.40, 7.25, 7.40, 24, 1.50, 0.50], [8.50, 7.35, 7.50, 24, 1.50, 0.50],
+      [9.00, 7.80, 7.90, 24, 1.50, 0.50], [9.50, 8.20, 8.35, 24, 1.50, 0.50], [10.0, 8.70, 8.80, 24, 1.50, 0.50],
+    ],
     // Table 3.D-2: groove width with standard spiral PTFE back-up rings (AS568 cross-sections).
     // [cs, back-up thickness, groove depth incl. clearance, width 1 back-up, width 2 back-ups]
     backup: [
@@ -345,7 +397,7 @@
    */
   const LIMITS = {
     squeeze: { // recommended compression band, %
-      staticRadial: [12, 30], face: [12, 30], dynamic: [8, 16],
+      staticRadial: [12, 30], face: [12, 30], dynamic: [8, 16], dovetail: [12, 30],
     },
     squeezeMaxStatic: 30,      // Parker: max. recommended static squeeze
     squeezeMaxDynamicSmall: 25, // Parker: small cross-sections may go to 25 % in dynamic use
@@ -359,9 +411,11 @@
     pressureNoBackup: { static: 103.5, staticEriks: 70, dynamic: 50 }, // bar
     pressure70ShoreStatic: 80, // ERIKS: no extrusion of 70 ShA below ~80 bar with correct clearance
     cornerRadiusFactor: 3,     // rule of thumb: groove centreline corner radius ≥ 3 × cross-section
+    dovetailMinCs: 3.53,       // ERIKS: dovetail grooves recommended for cross-sections ≥ 3.53 mm (.139 in)
+    dovetailFitMax: 3,         // O-ring mean diameter should match the groove mean diameter (Parker); ± 3 % flagged
   };
 
-  const Data = { SIZES, SERIES, MATERIALS, PARKER_IN, ERIKS_MM, LIMITS, IN };
+  const Data = { SIZES, SERIES, MATERIALS, PARKER_IN, ERIKS_MM, LIMITS, IN, BOSS_IN };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Data;
   else root.Data = Data;

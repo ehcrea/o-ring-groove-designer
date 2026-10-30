@@ -225,7 +225,7 @@ table.data td.strong { font-weight: 600; }
 }
 
 @media print {
-  .topbar .toolbar, .toast, .site-footer, .about, .lib-tools, #suggest, #apply-rec { display: none; }
+  .topbar .toolbar, .toast, .site-footer, .about, .lib-tools, #suggest, #apply-rec, .tip { display: none; }
   .topbar { position: static; }
   body { background: #fff; }
   .layout { grid-template-columns: 300px 1fr; padding: 0; gap: 12px; }
@@ -321,3 +321,32 @@ table.data td.wrap { white-space: normal; text-align: left; min-width: 180px; co
 @media print {
   .lib:not([open]) { display: none; }
 }
+
+/* Five seal types, tooltips, help */
+.layout-picker.five { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.layout-picker.five button { padding: 6px 2px 5px; font-size: 11px; }
+.layout-picker.five svg { width: 46px; height: 28px; }
+.lt { display: inline-flex; align-items: center; gap: 4px; }
+.tip { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; font-size: 11px; line-height: 1; color: var(--accent); cursor: help; font-weight: 600; }
+.tip:hover, .tip:focus-visible { background: var(--accent-soft); outline: none; }
+.help { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; }
+.help h3 { font-size: 14px; margin: 16px 0 6px; }
+.help ol, .help ul { padding-left: 20px; margin: 0 0 10px; line-height: 1.55; }
+.help li { margin-bottom: 4px; }
+.help dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 10px; }
+.help dt { font-weight: 600; }
+.help dd { margin: 0; color: var(--text-2); }
+.help svg { display: block; width: 100%; max-width: 420px; height: auto; margin: 6px auto 4px; }
+.help svg .metal { fill: var(--metal); stroke: var(--metal-edge); }
+.help svg .oring { fill: var(--rubber); }
+.help svg .dim { stroke: var(--text-3); fill: none; }
+.help svg text { fill: var(--text-2); font-size: 12px; font-weight: 600; }
+.toast { max-width: min(520px, calc(100vw - 32px)); text-align: center; }
+@media (max-width: 640px) {
+  .help dl { grid-template-columns: 1fr; }
+  .help dd { margin-bottom: 6px; }
+}
+.preset select { width: auto; max-width: 200px; }
+.toolbar { gap: 6px; }
+.toolbar .btn { padding: 0 10px; }
+@media (max-width: 640px) { .preset, .preset select { width: 100%; max-width: 100%; } }

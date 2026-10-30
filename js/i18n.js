@@ -22,7 +22,7 @@
   const ROWS = [
     // ----- Page, toolbar -----
     ['O-Ring Groove Designer', 'O-Ring-Nutauslegung', 'O-ring-groefontwerp', 'O-Ring Kanal Tasarımı'],
-    ['Piston, rod & face seals · AS568 & ISO 3601 · v1', 'Kolben-, Stangen- & Flanschdichtungen · AS568 & ISO 3601 · v1', 'Zuiger-, stang- & vlakafdichtingen · AS568 & ISO 3601 · v1', 'Piston, mil ve yüzey sızdırmazlığı · AS568 ve ISO 3601 · v1'],
+    ['Piston, rod & face seals · AS568 & ISO 3601 · v1.1', 'Kolben-, Stangen- & Flanschdichtungen · AS568 & ISO 3601 · v1.1', 'Zuiger-, stang- & vlakafdichtingen · AS568 & ISO 3601 · v1.1', 'Piston, mil ve yüzey sızdırmazlığı · AS568 ve ISO 3601 · v1.1'],
     ['Unit system', 'Einheitensystem', 'Eenhedenstelsel', 'Birim sistemi'],
     ['Metric', 'Metrisch', 'Metrisch', 'Metrik'],
     ['Inch', 'Zoll', 'Inch', 'İnç'],
@@ -54,7 +54,7 @@
     ['Outside', 'Außen', 'Buiten', 'Dışarıdan'],
     ['Groove outline', 'Nutkontur', 'Groefcontour', 'Kanal konturu'],
     ['Circle', 'Kreis', 'Cirkel', 'Daire'],
-    ['Rounded rect.', 'Rechteck (R)', 'Rechthoek (R)', 'Dikdörtgen (R)'],
+    ['Rectangle (R)', 'Rechteck (R)', 'Rechthoek (R)', 'Dikdörtgen (R)'],
     ['Design guideline', 'Auslegungsrichtlinie', 'Ontwerprichtlijn', 'Tasarım kılavuzu'],
     ['Auto (Parker for AS568, ERIKS for metric)', 'Auto (Parker für AS568, ERIKS für metrisch)', 'Auto (Parker voor AS568, ERIKS voor metrisch)', 'Otomatik (AS568 için Parker, metrik için ERIKS)'],
     ['Parker (ORD 5700)', 'Parker (ORD 5700)', 'Parker (ORD 5700)', 'Parker (ORD 5700)'],
@@ -386,36 +386,247 @@
     ['Aromatics, ketones, chlorinated solvents; poor at low temperature', 'Aromaten, Ketone, chlorierte Lösemittel; schlecht bei tiefer Temperatur', 'Aromaten, ketonen, gechloreerde oplosmiddelen; slecht bij lage temperatuur', 'Aromatikler, ketonlar, klorlu çözücüler; düşük sıcaklıkta zayıf'],
     ['Mineral oils and fuels', 'Mineralöle und Kraftstoffe', 'Minerale oliën en brandstoffen', 'Mineral yağlar ve yakıtlar'],
     ['Vacuum and low gas permeability, ketones, phosphate esters', 'Vakuum und geringe Gasdurchlässigkeit, Ketone, Phosphatester', 'Vacuüm en lage gasdoorlaatbaarheid, ketonen, fosfaatesters', 'Vakum ve düşük gaz geçirgenliği, ketonlar, fosfat esterler'],
+
+    // ----- v1.1: dovetail, boss, presets, help -----
+    ['Application example', 'Anwendungsbeispiel', 'Toepassingsvoorbeeld', 'Uygulama örneği'],
+    ['Load application example…', 'Anwendungsbeispiel laden…', 'Toepassingsvoorbeeld laden…', 'Uygulama örneği yükle…'],
+    ['Loaded example: {name}', 'Beispiel geladen: {name}', 'Voorbeeld geladen: {name}', 'Örnek yüklendi: {name}'],
+    ['How to use this calculator', 'So verwenden Sie diesen Rechner', 'Zo gebruikt u deze calculator', 'Bu hesaplayıcı nasıl kullanılır'],
+    ['Help', 'Hilfe', 'Help', 'Yardım'],
+    ['Piston', 'Kolben', 'Zuiger', 'Piston'],
+    ['Face', 'Flansch', 'Vlak', 'Yüzey'],
+    ['Dovetail', 'Schwalbenschw.', 'Zwaluwstaart', 'Kırlangıç'],
+    ['Boss port', 'Einschraub-Port', 'Inschroefpoort', 'Boss port'],
+    ['Auto uses Parker\'s inch tables for AS568 cross-sections and ERIKS\' metric tables for other cross-sections.', 'Auto verwendet die Zoll-Tabellen von Parker für AS568-Schnurstärken und die metrischen Tabellen von ERIKS für andere Schnurstärken.', 'Auto gebruikt de inchtabellen van Parker voor AS568-koorddiktes en de metrische tabellen van ERIKS voor andere koorddiktes.', 'Otomatik, AS568 kesitleri için Parker inç tablolarını, diğer kesitler için ERIKS metrik tablolarını kullanır.'],
+    ['Hard rings (PTFE or 90 Shore A) beside the O-ring that close the extrusion gap. Needed at high pressure; they make the groove wider.', 'Harte Ringe (PTFE oder 90 Shore A) neben dem O-Ring, die den Extrusionsspalt schließen. Bei hohem Druck nötig; die Nut wird breiter.', 'Harde ringen (PTFE of 90 Shore A) naast de O-ring die de extrusiespleet afsluiten. Nodig bij hoge druk; de groef wordt breder.', 'O-ringin yanında ekstrüzyon boşluğunu kapatan sert halkalar (PTFE veya 90 Shore A). Yüksek basınçta gerekir; kanalı genişletir.'],
+    ['Side wall angle measured from the vertical. Parker uses 24° (walls at 66° to the groove bottom); ERIKS lists 23–32° depending on the cross-section.', 'Seitenwandwinkel, gemessen von der Senkrechten. Parker verwendet 24° (Wände 66° zum Nutgrund); ERIKS nennt je nach Schnurstärke 23–32°.', 'Zijwandhoek gemeten vanaf de verticaal. Parker gebruikt 24° (wanden onder 66° met de groefbodem); ERIKS noemt 23–32° afhankelijk van de koorddikte.', 'Dikeyden ölçülen yan duvar açısı. Parker 24° kullanır (duvarlar kanal tabanına 66°); ERIKS kesite göre 23–32° verir.'],
+    ['Gap between the flange faces after assembly. Keep 0 (metal-to-metal contact) where possible; any gap adds to the gland depth and is an extrusion path.', 'Spalt zwischen den Flanschflächen nach der Montage. Möglichst 0 (Metall-auf-Metall-Kontakt); jeder Spalt vergrößert die Einbautiefe und ist ein Extrusionsweg.', 'Spleet tussen de flensvlakken na montage. Houd waar mogelijk 0 aan (metaal-op-metaalcontact); elke spleet vergroot de inbouwdiepte en is een extrusiepad.', 'Montajdan sonra flanş yüzeyleri arasındaki boşluk. Mümkünse 0 tutun (metal-metal temas); her boşluk yuva derinliğine eklenir ve bir ekstrüzyon yoludur.'],
+    ['Without guide rings the inner part can shift to one side. Then the gland is deeper by the radial clearance on that side, which lowers the minimum compression.', 'Ohne Führungsringe kann sich das Innenteil zur Seite verschieben. Dann ist der Einbauraum dort um das Radialspiel tiefer, und die minimale Verpressung sinkt.', 'Zonder geleideringen kan het binnendeel naar één kant verschuiven. De inbouwruimte is daar dan een radiale speling dieper, wat de minimale samendrukking verlaagt.', 'Kılavuz halkası yoksa iç parça bir tarafa kayabilir. O tarafta yuva radyal boşluk kadar derinleşir ve minimum sıkıştırma düşer.'],
+    ['Change in O-ring volume from the fluid, from the compound\'s fluid-resistance data (e.g. +5 % in mineral oil). Negative values are shrinkage.', 'Volumenänderung des O-Rings durch das Medium, aus den Beständigkeitsdaten der Mischung (z. B. +5 % in Mineralöl). Negative Werte bedeuten Schrumpfung.', 'Volumeverandering van de O-ring door het medium, uit de bestendigheidsgegevens van de compound (bijv. +5 % in minerale olie). Negatieve waarden zijn krimp.', 'Akışkandan kaynaklanan O-ring hacim değişimi, karışımın dayanım verilerinden (ör. mineral yağda +%5). Negatif değerler büzülmedir.'],
+    ['AS568 boss seals (-9xx)', 'AS568-Einschraubdichtungen (-9xx)', 'AS568-inschroefafdichtingen (-9xx)', 'AS568 boss sızdırmazlıkları (-9xx)'],
+    ['AS568 -9xx for straight-thread tube fittings', 'AS568 -9xx für Rohrverschraubungen mit zylindrischem Gewinde', 'AS568 -9xx voor buisfittingen met cilindrische schroefdraad', 'Düz dişli boru bağlantıları için AS568 -9xx'],
+    ['Groove mean Ø', 'Mittlerer Nut-Ø', 'Gemiddelde groef-Ø', 'Kanal ortalama Ø'],
+    ['Centreline length', 'Länge Mittellinie', 'Lengte hartlijn', 'Merkez hattı uzunluğu'],
+    ['Centreline width', 'Breite Mittellinie', 'Breedte hartlijn', 'Merkez hattı genişliği'],
+    ['Centreline corner radius', 'Eckenradius Mittellinie', 'Hoekradius hartlijn', 'Merkez hattı köşe yarıçapı'],
+    ['Undercut angle', 'Hinterschnittwinkel', 'Ondersnijdingshoek', 'Alttan kesme açısı'],
+    ['Fitting undercut Ø F', 'Einstich-Ø F der Verschraubung', 'Insteek-Ø F van de fitting', 'Bağlantı boyun Ø F'],
+    ['The O-ring sits on the undercut of the fitting and is squeezed into the conical seat of the port. Select the size by tube OD in the O-ring section; the port and fitting dimensions are listed in the results.', 'Der O-Ring sitzt im Einstich der Verschraubung und wird in den Kegelsitz des Ports gepresst. Die Größe im Abschnitt O-Ring nach Rohraußendurchmesser wählen; die Port- und Verschraubungsmaße stehen in den Ergebnissen.', 'De O-ring zit in de insteek van de fitting en wordt in de conische zitting van de poort gedrukt. Kies de maat op buisdiameter in het O-ringdeel; de poort- en fittingmaten staan bij de resultaten.', 'O-ring bağlantının boynuna oturur ve portun konik yuvasına sıkıştırılır. Ölçüyü O-ring bölümünde boru dış çapına göre seçin; port ve bağlantı ölçüleri sonuçlarda listelenir.'],
+    ['Width at the opening', 'Breite an der Öffnung', 'Breedte bij de opening', 'Ağız genişliği'],
+    ['Apply standard fitting dimensions', 'Normmaße der Verschraubung übernehmen', 'Normmaten van de fitting toepassen', 'Standart bağlantı ölçülerini uygula'],
+    ['Installed stretch (nominal)', 'Einbaudehnung (nominal)', 'Inbouwrek (nominaal)', 'Montaj gerilmesi (nominal)'],
+    ['Worst case {min} … {max} · on the fitting undercut', 'Grenzfall {min} … {max} · auf dem Einstich der Verschraubung', 'Ongunstigst {min} … {max} · op de insteek van de fitting', 'En kötü durum {min} … {max} · bağlantı boynunda'],
+    ['Tube OD', 'Rohr-Außen-Ø', 'Buis-buiten-Ø', 'Boru dış çapı'],
+    ['Thread', 'Gewinde', 'Schroefdraad', 'Diş'],
+    ['Cone angle', 'Kegelwinkel', 'Kegelhoek', 'Koni açısı'],
+    ['Port (boss)', 'Port (Gehäuse)', 'Poort (huis)', 'Port (gövde)'],
+    ['Fitting', 'Verschraubung', 'Fitting', 'Bağlantı'],
+    ['cone {z}°', 'Kegel {z}°', 'kegel {z}°', 'koni {z}°'],
+    ['Mean diameter fit', 'Passung mittlerer Durchmesser', 'Passing gemiddelde diameter', 'Ortalama çap uyumu'],
+    ['O-ring mean Ø vs. groove mean Ø', 'mittlerer O-Ring-Ø zu mittlerem Nut-Ø', 'gemiddelde O-ring-Ø t.o.v. gemiddelde groef-Ø', 'O-ring ortalama Ø / kanal ortalama Ø'],
+    ['Width at the bottom', 'Breite am Nutgrund', 'Breedte bij de bodem', 'Taban genişliği'],
+    ['undercut {v} per side', 'Hinterschnitt {v} je Seite', 'ondersnijding {v} per zijde', 'her tarafta {v} alttan kesme'],
+    ['Retention', 'Halt', 'Vasthouden', 'Tutma'],
+    ['O-ring CS minus opening width', 'Schnurstärke minus Öffnungsbreite', 'koorddikte min openingsbreedte', 'O-ring kesiti eksi ağız genişliği'],
+    ['Installed stretch', 'Einbaudehnung', 'Inbouwrek', 'Montaj gerilmesi'],
+    ['standard {v}', 'Norm {v}', 'norm {v}', 'standart {v}'],
+    ['Port cone Ø U', 'Kegel-Ø U des Ports', 'Kegel-Ø U van de poort', 'Port koni Ø U'],
+    ['depth K {v}', 'Tiefe K {v}', 'diepte K {v}', 'derinlik K {v}'],
+    ['tube OD {v} in', 'Rohr-AD {v} in', 'buis-OD {v} in', 'boru OD {v} in'],
+    ['Port and fitting dimensions', 'Port- und Verschraubungsmaße', 'Poort- en fittingmaten', 'Port ve bağlantı ölçüleri'],
+    ['Radius at the opening edges', 'Radius an den Öffnungskanten', 'Radius aan de openingsranden', 'Ağız kenarı yarıçapı'],
+    ['Standard', 'Norm', 'Norm', 'Standart'],
+    ['Port: min. full-thread depth J', 'Port: min. Gewindetiefe J', 'Poort: min. volle draaddiepte J', 'Port: min. tam diş derinliği J'],
+    ['Port: cone Ø U (+0.005 in)', 'Port: Kegel-Ø U (+0,005 in)', 'Poort: kegel-Ø U (+0,005 in)', 'Port: koni Ø U (+0,005 in)'],
+    ['Port: cone depth K (+0.015 in)', 'Port: Kegeltiefe K (+0,015 in)', 'Poort: kegeldiepte K (+0,015 in)', 'Port: koni derinliği K (+0,015 in)'],
+    ['Port: cone angle Z', 'Port: Kegelwinkel Z', 'Poort: kegelhoek Z', 'Port: koni açısı Z'],
+    ['Port: D (min.)', 'Port: D (min.)', 'Poort: D (min.)', 'Port: D (min.)'],
+    ['Port: Y (min.)', 'Port: Y (min.)', 'Poort: Y (min.)', 'Port: Y (min.)'],
+    ['Port: P (min.)', 'Port: P (min.)', 'Poort: P (min.)', 'Port: P (min.)'],
+    ['Port: O (min.)', 'Port: O (min.)', 'Poort: O (min.)', 'Port: O (min.)'],
+    ['Fitting: undercut Ø F (+0.002 / −0.003 in)', 'Verschraubung: Einstich-Ø F (+0,002 / −0,003 in)', 'Fitting: insteek-Ø F (+0,002 / −0,003 in)', 'Bağlantı: boyun Ø F (+0,002 / −0,003 in)'],
+    ['Fitting: D (max.)', 'Verschraubung: D (max.)', 'Fitting: D (max.)', 'Bağlantı: D (maks.)'],
+    ['Fitting: U (+0.010 in)', 'Verschraubung: U (+0,010 in)', 'Fitting: U (+0,010 in)', 'Bağlantı: U (+0,010 in)'],
+    ['Fitting: K (+0.015 in)', 'Verschraubung: K (+0,015 in)', 'Fitting: K (+0,015 in)', 'Bağlantı: K (+0,015 in)'],
+    ['Letters as in the port and fitting-end drawings of the standard (ERIKS O-ring handbook, MS33656 fitting end). Check the current standard (SAE J1926 / AS5202) for your fitting.', 'Buchstaben wie in den Port- und Verschraubungszeichnungen der Norm (ERIKS O-Ring-Handbuch, Verschraubungsende MS33656). Für Ihre Verschraubung die aktuelle Norm (SAE J1926 / AS5202) prüfen.', 'Letters zoals in de poort- en fittingtekeningen van de norm (ERIKS O-ringhandboek, fittingeinde MS33656). Controleer de actuele norm (SAE J1926 / AS5202) voor uw fitting.', 'Harfler standardın port ve bağlantı ucu çizimlerindeki gibidir (ERIKS O-ring el kitabı, MS33656 bağlantı ucu). Bağlantınız için güncel standardı (SAE J1926 / AS5202) kontrol edin.'],
+    ['Dovetail groove', 'Schwalbenschwanznut', 'Zwaluwstaartgroef', 'Kırlangıç kuyruğu kanal'],
+    ['AS568 -9xx boss seals and port / fitting dimensions · values in {unit}. Click a row to use that size.', 'AS568-Einschraubdichtungen -9xx mit Port- / Verschraubungsmaßen · Werte in {unit}. Zeile anklicken, um diese Größe zu verwenden.', 'AS568-inschroefafdichtingen -9xx met poort- / fittingmaten · waarden in {unit}. Klik op een rij om die maat te gebruiken.', 'AS568 -9xx boss sızdırmazlıkları ve port / bağlantı ölçüleri · değerler {unit} cinsinden. Ölçüyü kullanmak için bir satıra tıklayın.'],
+    ['Undercut groove in a flat face that holds the O-ring during assembly (doors, lids, vacuum chambers). The mean groove diameter should match the mean O-ring diameter.', 'Hinterschnittene Nut in einer Planfläche, die den O-Ring bei der Montage hält (Türen, Deckel, Vakuumkammern). Der mittlere Nutdurchmesser soll dem mittleren O-Ring-Durchmesser entsprechen.', 'Ondersneden groef in een vlak die de O-ring tijdens montage vasthoudt (deuren, deksels, vacuümkamers). De gemiddelde groefdiameter moet gelijk zijn aan de gemiddelde O-ringdiameter.', 'Montaj sırasında O-ringi tutan, düz yüzeyde alttan kesilmiş kanal (kapılar, kapaklar, vakum hazneleri). Kanal ortalama çapı O-ring ortalama çapına eşit olmalıdır.'],
+    ['AS568 -9xx O-ring of a straight-thread tube fitting. It is squeezed between the fitting undercut and the conical seat of the port, so the gland comes from the port standard.', 'AS568-O-Ring -9xx einer Rohrverschraubung mit zylindrischem Gewinde. Er wird zwischen Einstich der Verschraubung und Kegelsitz des Ports verpresst, der Einbauraum ergibt sich also aus der Port-Norm.', 'AS568-O-ring -9xx van een buisfitting met cilindrische schroefdraad. Hij wordt tussen de insteek van de fitting en de conische zitting van de poort samengedrukt, dus de inbouwruimte volgt uit de poortnorm.', 'Düz dişli boru bağlantısının AS568 -9xx O-ringi. Bağlantı boynu ile portun konik yuvası arasında sıkışır; yuva port standardından gelir.'],
+    ['Rounded rectangle: enter the groove centreline; the walls are offset by half the opening width.', 'Gerundetes Rechteck: Nut-Mittellinie eingeben; die Wände liegen um die halbe Öffnungsbreite versetzt.', 'Afgeronde rechthoek: voer de hartlijn van de groef in; de wanden liggen een halve openingsbreedte verschoven.', 'Yuvarlatılmış dikdörtgen: kanal merkez hattını girin; duvarlar ağız genişliğinin yarısı kadar kaydırılır.'],
+    ['Hydraulics', 'Hydraulik', 'Hydrauliek', 'Hidrolik'],
+    ['Covers & housings', 'Deckel & Gehäuse', 'Deksels & huizen', 'Kapaklar ve gövdeler'],
+    ['Process, vacuum & fuel', 'Prozess, Vakuum & Kraftstoff', 'Proces, vacuüm & brandstof', 'Proses, vakum ve yakıt'],
+    ['Dovetail grooves', 'Schwalbenschwanznuten', 'Zwaluwstaartgroeven', 'Kırlangıç kuyruğu kanallar'],
+    ['Hydraulic cylinder piston (dynamic, 160 bar)', 'Hydraulikzylinder, Kolben (dynamisch, 160 bar)', 'Hydraulische cilinder, zuiger (dynamisch, 160 bar)', 'Hidrolik silindir pistonu (dinamik, 160 bar)'],
+    ['Hydraulic cylinder rod (dynamic, 160 bar)', 'Hydraulikzylinder, Stange (dynamisch, 160 bar)', 'Hydraulische cilinder, stang (dynamisch, 160 bar)', 'Hidrolik silindir mili (dinamik, 160 bar)'],
+    ['Valve plug, static, 250 bar, two back-up rings', 'Ventilstopfen, statisch, 250 bar, zwei Stützringe', 'Klepplug, statisch, 250 bar, twee steunringen', 'Valf tapası, statik, 250 bar, iki destek halkası'],
+    ['Straight-thread port, 3/8 in tube (-906)', 'Einschraub-Port, 3/8-Zoll-Rohr (-906)', 'Inschroefpoort, 3/8 inch buis (-906)', 'Düz dişli port, 3/8 inç boru (-906)'],
+    ['Round cover, face seal (6 bar)', 'Runder Deckel, Flanschdichtung (6 bar)', 'Rond deksel, vlakafdichting (6 bar)', 'Yuvarlak kapak, yüzey sızdırmazlığı (6 bar)'],
+    ['Rectangular enclosure lid (rounded rectangle)', 'Rechteckiger Gehäusedeckel (gerundetes Rechteck)', 'Rechthoekig behuizingsdeksel (afgeronde rechthoek)', 'Dikdörtgen muhafaza kapağı (yuvarlatılmış dikdörtgen)'],
+    ['Bearing cap on a shaft (static rod gland)', 'Lagerdeckel auf einer Welle (statische Stangennut)', 'Lagerdeksel op een as (statische stanggroef)', 'Mil üzerinde yatak kapağı (statik mil yuvası)'],
+    ['AS568 piston seal in a 2 in bore', 'AS568-Kolbendichtung in einer 2-Zoll-Bohrung', 'AS568-zuigerafdichting in een boring van 2 inch', '2 inç delikte AS568 piston sızdırmazlığı'],
+    ['Vacuum flange (pressure from outside)', 'Vakuumflansch (Druck von außen)', 'Vacuümflens (druk van buiten)', 'Vakum flanşı (basınç dışarıdan)'],
+    ['Hot water / steam cover, EPDM (150 °C)', 'Deckel für Heißwasser / Dampf, EPDM (150 °C)', 'Deksel voor heet water / stoom, EPDM (150 °C)', 'Sıcak su / buhar kapağı, EPDM (150 °C)'],
+    ['Fuel system face seal, fluorosilicone (−55 °C)', 'Flanschdichtung im Kraftstoffsystem, Fluorsilikon (−55 °C)', 'Vlakafdichting in brandstofsysteem, fluorsiliconen (−55 °C)', 'Yakıt sistemi yüzey sızdırmazlığı, florosilikon (−55 °C)'],
+    ['Vacuum chamber door (rectangular dovetail)', 'Vakuumkammertür (rechteckige Schwalbenschwanznut)', 'Vacuümkamerdeur (rechthoekige zwaluwstaart)', 'Vakum hazne kapısı (dikdörtgen kırlangıç kuyruğu)'],
+    ['Valve seat, O-ring retained in a dovetail', 'Ventilsitz, O-Ring in Schwalbenschwanznut gehalten', 'Klepzitting, O-ring vastgehouden in zwaluwstaart', 'Valf yuvası, O-ring kırlangıç kuyruğunda tutulur'],
+    ['The O-ring mean diameter differs by {v} % from the groove mean diameter; in dovetail grooves they should coincide.', 'Der mittlere O-Ring-Durchmesser weicht um {v} % vom mittleren Nutdurchmesser ab; bei Schwalbenschwanznuten sollen sie übereinstimmen.', 'De gemiddelde O-ringdiameter wijkt {v} % af van de gemiddelde groefdiameter; bij zwaluwstaartgroeven moeten ze samenvallen.', 'O-ring ortalama çapı kanal ortalama çapından %{v} farklı; kırlangıç kuyruğu kanallarda eşit olmalıdır.'],
+    ['The groove opening is not narrower than the O-ring cross-section, so the ring is not retained.', 'Die Nutöffnung ist nicht schmaler als die Schnurstärke, der Ring wird also nicht gehalten.', 'De groefopening is niet smaller dan de koorddikte, dus de ring wordt niet vastgehouden.', 'Kanal ağzı O-ring kesitinden dar değil, bu nedenle halka tutulmaz.'],
+    ['ERIKS recommends dovetail grooves only for cross-sections of 3.53 mm (.139 in) and larger.', 'ERIKS empfiehlt Schwalbenschwanznuten nur für Schnurstärken ab 3,53 mm (.139 in).', 'ERIKS adviseert zwaluwstaartgroeven alleen voor koorddiktes van 3,53 mm (.139 in) en groter.', 'ERIKS kırlangıç kuyruğu kanalları yalnızca 3,53 mm (.139 in) ve üzeri kesitler için önerir.'],
+    ['Enter the side wall (undercut) angle of the dovetail.', 'Seitenwandwinkel (Hinterschnitt) der Schwalbenschwanznut eingeben.', 'Voer de zijwandhoek (ondersnijding) van de zwaluwstaart in.', 'Kırlangıç kuyruğunun yan duvar (alttan kesme) açısını girin.'],
+    ['Dovetail grooves are expensive to machine; the radius at the opening edges is critical (too small damages the O-ring, too large lets it extrude).', 'Schwalbenschwanznuten sind teuer in der Fertigung; der Radius an den Öffnungskanten ist kritisch (zu klein beschädigt den O-Ring, zu groß lässt ihn extrudieren).', 'Zwaluwstaartgroeven zijn duur om te bewerken; de radius aan de openingsranden is kritisch (te klein beschadigt de O-ring, te groot laat hem extruderen).', 'Kırlangıç kuyruğu kanalların işlenmesi pahalıdır; ağız kenarı yarıçapı kritiktir (çok küçük O-ringe zarar verir, çok büyük ekstrüzyona izin verir).'],
+    ['Side wall angle {v}° differs from the guideline {g}°.', 'Seitenwandwinkel {v}° weicht vom Richtwert {g}° ab.', 'Zijwandhoek {v}° wijkt af van de richtlijn {g}°.', 'Yan duvar açısı {v}°, kılavuz değeri {g}° ile farklı.'],
+    ['Select an AS568 -9xx boss seal size.', 'Eine AS568-Einschraubdichtung -9xx wählen.', 'Kies een AS568-inschroefafdichting -9xx.', 'Bir AS568 -9xx boss sızdırmazlık ölçüsü seçin.'],
+    ['Fitting undercut Ø differs from the MS33656 value {v}.', 'Einstich-Ø der Verschraubung weicht vom MS33656-Wert {v} ab.', 'Insteek-Ø van de fitting wijkt af van de MS33656-waarde {v}.', 'Bağlantı boyun çapı MS33656 değeri {v} ile farklı.'],
+    ['The O-ring can sit loose on the fitting undercut (stretch {v} %).', 'Der O-Ring kann lose im Einstich sitzen (Dehnung {v} %).', 'De O-ring kan los op de insteek zitten (rek {v} %).', 'O-ring bağlantı boynunda gevşek oturabilir (gerilme %{v}).'],
+    ['Silicone and fluorosilicone are not recommended for boss seals: low strength and extrusion resistance.', 'Silikon und Fluorsilikon werden für Einschraubdichtungen nicht empfohlen: geringe Festigkeit und Extrusionsbeständigkeit.', 'Siliconen en fluorsiliconen worden niet aanbevolen voor inschroefafdichtingen: lage sterkte en extrusiebestendigheid.', 'Silikon ve florosilikon boss sızdırmazlığı için önerilmez: düşük dayanım ve ekstrüzyon direnci.'],
+    ['Boss seals in high-pressure hydraulics usually use 90 Shore A compounds.', 'Einschraubdichtungen in der Hochdruckhydraulik verwenden meist 90-Shore-A-Mischungen.', 'Inschroefafdichtingen in hogedrukhydrauliek gebruiken meestal compounds van 90 Shore A.', 'Yüksek basınçlı hidrolikte boss sızdırmazlıkları genellikle 90 Shore A karışım kullanır.'],
+    ['The gland is defined by the port (boss) and fitting-end standards: check the port dimensions below rather than a groove.', 'Der Einbauraum ist durch die Port- und Verschraubungsnormen festgelegt: statt einer Nut die Portmaße unten prüfen.', 'De inbouwruimte ligt vast in de poort- en fittingnormen: controleer de poortmaten hieronder in plaats van een groef.', 'Yuva port ve bağlantı ucu standartlarıyla belirlenir: kanal yerine aşağıdaki port ölçülerini kontrol edin.'],
   ];
 
   // Blocks with inline markup, translated as a whole (static, trusted content).
   const REPO = 'https://github.com/ehcrea/o-ring-groove-designer';
   const HTML = {
     about: {
-      en: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring Groove Designer</h2><p>Version 1 · by Eren Tozlu</p></div></div>
+      en: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring Groove Designer</h2><p>Version 1.1 · by Eren Tozlu</p></div></div>
 <p>A free, browser-based tool for designing and checking O-ring grooves (glands): piston and rod seals, static or dynamic, and face seals with circular or rounded-rectangle grooves. It checks compression with worst-case tolerances, gland fill, stretch, extrusion gap, temperature and material limits. All calculations run in your browser.</p>
 <p>Includes the AS568 and ISO 3601-1 size series, an elastomer library and groove guideline tables based on the public design guides of Parker (O-Ring Handbook ORD 5700) and ERIKS (O-ring Technical Handbook). Not affiliated with or endorsed by these companies.</p>
 <p>Made by Eren Tozlu. More engineering tools and projects at <a href="https://ehcrea.com" target="_blank" rel="noopener">ehcrea.com</a>.</p>
 <p>Open source under the <a href="${REPO}/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>; the source code is on <a href="${REPO}" target="_blank" rel="noopener">GitHub</a>.</p>
 <p class="about-meta">Results are design guidance. Confirm critical seals with the seal supplier and by testing.</p>`,
-      de: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring-Nutauslegung</h2><p>Version 1 · von Eren Tozlu</p></div></div>
+      de: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring-Nutauslegung</h2><p>Version 1.1 · von Eren Tozlu</p></div></div>
 <p>Ein kostenloses Browser-Werkzeug zum Auslegen und Prüfen von O-Ring-Nuten (Einbauräumen): Kolben- und Stangendichtungen, statisch oder dynamisch, sowie Flanschdichtungen mit kreisförmiger oder gerundet-rechteckiger Nut. Es prüft die Verpressung mit ungünstigsten Toleranzen, Nutfüllung, Dehnung, Extrusionsspalt, Temperatur- und Werkstoffgrenzen. Alle Berechnungen laufen in Ihrem Browser.</p>
 <p>Enthält die Größenreihen AS568 und ISO 3601-1, eine Elastomer-Bibliothek und Nut-Richtwerttabellen auf Basis der öffentlichen Auslegungsrichtlinien von Parker (O-Ring Handbook ORD 5700) und ERIKS (O-ring Technical Handbook). Keine Verbindung zu oder Empfehlung durch diese Unternehmen.</p>
 <p>Erstellt von Eren Tozlu. Weitere Engineering-Werkzeuge und Projekte auf <a href="https://ehcrea.com" target="_blank" rel="noopener">ehcrea.com</a>.</p>
 <p>Open Source unter der <a href="${REPO}/blob/main/LICENSE" target="_blank" rel="noopener">MIT-Lizenz</a>; der Quellcode liegt auf <a href="${REPO}" target="_blank" rel="noopener">GitHub</a>.</p>
 <p class="about-meta">Die Ergebnisse sind Auslegungshilfen. Kritische Dichtstellen mit dem Dichtungshersteller und durch Versuche bestätigen.</p>`,
-      nl: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-ring-groefontwerp</h2><p>Versie 1 · door Eren Tozlu</p></div></div>
+      nl: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-ring-groefontwerp</h2><p>Versie 1.1 · door Eren Tozlu</p></div></div>
 <p>Een gratis browsertool voor het ontwerpen en controleren van O-ringgroeven (inbouwruimtes): zuiger- en stangafdichtingen, statisch of dynamisch, en vlakafdichtingen met ronde of afgerond-rechthoekige groef. De tool controleert samendrukking met de ongunstigste toleranties, groefvulling, rek, extrusiespleet, temperatuur- en materiaalgrenzen. Alle berekeningen draaien in uw browser.</p>
 <p>Bevat de maatreeksen AS568 en ISO 3601-1, een elastomeerbibliotheek en groefrichtlijntabellen op basis van de openbare ontwerprichtlijnen van Parker (O-Ring Handbook ORD 5700) en ERIKS (O-ring Technical Handbook). Niet gelieerd aan of goedgekeurd door deze bedrijven.</p>
 <p>Gemaakt door Eren Tozlu. Meer engineeringtools en projecten op <a href="https://ehcrea.com" target="_blank" rel="noopener">ehcrea.com</a>.</p>
 <p>Open source onder de <a href="${REPO}/blob/main/LICENSE" target="_blank" rel="noopener">MIT-licentie</a>; de broncode staat op <a href="${REPO}" target="_blank" rel="noopener">GitHub</a>.</p>
 <p class="about-meta">De resultaten zijn ontwerprichtlijnen. Bevestig kritische afdichtingen met de leverancier en door testen.</p>`,
-      tr: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring Kanal Tasarımı</h2><p>Sürüm 1 · Eren Tozlu</p></div></div>
+      tr: `<div class="about-head"><img src="icons/favicon.svg" alt=""><div><h2 id="about-title">O-Ring Kanal Tasarımı</h2><p>Sürüm 1.1 · Eren Tozlu</p></div></div>
 <p>O-ring kanallarını (yuvalarını) tasarlamak ve kontrol etmek için ücretsiz, tarayıcı tabanlı bir araç: statik veya dinamik piston ve mil sızdırmazlıkları ile dairesel veya yuvarlatılmış dikdörtgen kanallı yüzey sızdırmazlıkları. En kötü durum toleranslarıyla sıkıştırmayı, kanal doluluğunu, gerilmeyi, ekstrüzyon boşluğunu, sıcaklık ve malzeme sınırlarını kontrol eder. Tüm hesaplamalar tarayıcınızda çalışır.</p>
 <p>AS568 ve ISO 3601-1 ölçü serilerini, bir elastomer kütüphanesini ve Parker (O-Ring Handbook ORD 5700) ile ERIKS (O-ring Technical Handbook) firmalarının herkese açık tasarım kılavuzlarına dayanan kanal tablolarını içerir. Bu firmalarla bağlantılı değildir ve onlar tarafından onaylanmamıştır.</p>
 <p>Eren Tozlu tarafından yapılmıştır. Daha fazla mühendislik aracı ve proje için <a href="https://ehcrea.com" target="_blank" rel="noopener">ehcrea.com</a>.</p>
 <p><a href="${REPO}/blob/main/LICENSE" target="_blank" rel="noopener">MIT Lisansı</a> ile açık kaynaklıdır; kaynak kodu <a href="${REPO}" target="_blank" rel="noopener">GitHub</a> üzerindedir.</p>
 <p class="about-meta">Sonuçlar tasarım rehberidir. Kritik sızdırmazlıkları tedarikçiyle ve testle doğrulayın.</p>`,
+    },
+    help: {
+      en: `<h2 id="help-title">How to use the O-Ring Groove Designer</h2>
+<p>New here? Pick an example from <b>Load application example…</b> in the toolbar, then change one value at a time and watch the results.</p>
+<h3>Four steps</h3>
+<ol>
+<li><b>Application</b>: choose the seal type. <i>Piston</i>: groove in the inner part, sealing against a bore. <i>Rod</i>: groove in the housing, sealing against a rod or shaft. <i>Face</i>: groove in a flat face under a cover. <i>Dovetail</i>: undercut face groove that holds the O-ring. <i>Boss port</i>: O-ring of a straight-thread tube fitting. Then set static or dynamic motion, the pressure direction (face seals) and the groove outline: circle or rounded rectangle.</li>
+<li><b>O-ring</b>: pick a standard size (AS568, ISO 3601-1 or boss seals) or enter a custom one, then the material and hardness. <b>Suggest O-ring</b> picks the standard size that fits your hardware best.</li>
+<li><b>Hardware &amp; groove</b>: enter the main dimension (bore, rod, groove wall or centreline) and press <b>Apply recommended groove</b> to size the groove from the Parker or ERIKS guideline. Adjust the dimensions and tolerances to match your drawing.</li>
+<li><b>Operating conditions</b>: pressure, temperature range and the volume swell of the O-ring in your fluid.</li>
+</ol>
+<h3>The gland</h3>
+<svg viewBox="0 0 420 170" aria-hidden="true"><path class="metal" d="M10 20H410V52H10Z"/><path class="metal" d="M10 66H150V140H270V66H410V160H10Z"/><rect class="oring" x="168" y="52" width="70" height="88" rx="35"/><path class="dim" d="M150 150H270M150 145V155M270 145V155"/><text x="210" y="166" text-anchor="middle">G</text><path class="dim" d="M290 52V140M285 52H295M285 140H295"/><text x="298" y="100">L</text><path class="dim" d="M370 52V66M365 52H375M365 66H375"/><text x="380" y="63">E/2</text><path class="dim" d="M120 52V140" stroke-dasharray="3 3"/><text x="40" y="100">CS &gt; L</text></svg>
+<dl>
+<dt>Gland depth L</dt><dd>Distance from the groove bottom to the mating surface; for radial seals it includes the radial clearance, for face seals the flange gap.</dd>
+<dt>Groove width G</dt><dd>Room for the O-ring to deform sideways, for swell and for back-up rings.</dd>
+<dt>Clearance E</dt><dd>Diametral gap between the moving or mating parts (E/2 per side): the extrusion path under pressure.</dd>
+<dt>Compression (squeeze)</dt><dd>(CS − L) / CS: how much the cross-section is squeezed. Too little leaks, too much causes high friction, compression set and damage. Static 12–30 %, dynamic 8–16 %.</dd>
+<dt>Gland fill</dt><dd>O-ring cross-section area / gland area. Aim for about 75 % and stay below 85 %, so there is room for swell and thermal expansion.</dd>
+<dt>Stretch</dt><dd>How much the O-ring ID is stretched at installation. Keep below 5 % (3 % for face seals); stretch also flattens the cross-section.</dd>
+<dt>Worst case</dt><dd>All tolerances at their least favourable limits: the smallest ring in the deepest gland, and the other way round.</dd>
+</dl>
+<h3>Reading the results</h3>
+<ul>
+<li>The badge shows <b>OK</b>, <b>Check</b> (warnings) or <b>Problem</b> (errors). Each warning says what to change.</li>
+<li><b>Recommended groove</b> compares your design with the guideline values; ✓ is within the guideline, ! is outside.</li>
+<li>The libraries at the bottom list all O-ring sizes, the groove guideline tables and the materials. Click a row to use it.</li>
+<li>The ⓘ icons explain individual inputs. <b>Copy link</b> saves the whole design in a link; <b>Unit converter</b> converts lengths, pressures and temperatures.</li>
+</ul>
+<p class="about-meta">The tool follows the public design guides of Parker and ERIKS. Always confirm critical seals with the seal supplier and by testing.</p>`,
+      de: `<h2 id="help-title">So verwenden Sie die O-Ring-Nutauslegung</h2>
+<p>Neu hier? Wählen Sie in der Werkzeugleiste unter <b>Anwendungsbeispiel laden…</b> ein Beispiel, ändern Sie dann einen Wert nach dem anderen und beobachten Sie die Ergebnisse.</p>
+<h3>Vier Schritte</h3>
+<ol>
+<li><b>Anwendung</b>: Dichtungsart wählen. <i>Kolben</i>: Nut im Innenteil, dichtet gegen eine Bohrung. <i>Stange</i>: Nut im Gehäuse, dichtet gegen Stange oder Welle. <i>Flansch</i>: Nut in einer Planfläche unter einem Deckel. <i>Schwalbenschwanz</i>: hinterschnittene Flanschnut, die den O-Ring hält. <i>Einschraub-Port</i>: O-Ring einer Rohrverschraubung mit zylindrischem Gewinde. Dann statische oder dynamische Bewegung, die Druckrichtung (Flanschdichtungen) und die Nutkontur wählen: Kreis oder gerundetes Rechteck.</li>
+<li><b>O-Ring</b>: Normgröße wählen (AS568, ISO 3601-1 oder Einschraubdichtungen) oder eigene Maße eingeben, dann Werkstoff und Härte. <b>O-Ring vorschlagen</b> wählt die Normgröße, die am besten zu Ihren Einbaumaßen passt.</li>
+<li><b>Einbauraum &amp; Nut</b>: Hauptmaß eingeben (Bohrung, Stange, Nutwand oder Mittellinie) und <b>Empfohlene Nut übernehmen</b> drücken, um die Nut nach der Parker- oder ERIKS-Richtlinie auszulegen. Maße und Toleranzen an Ihre Zeichnung anpassen.</li>
+<li><b>Betriebsbedingungen</b>: Druck, Temperaturbereich und die Volumenquellung des O-Rings in Ihrem Medium.</li>
+</ol>
+<h3>Der Einbauraum</h3>
+<svg viewBox="0 0 420 170" aria-hidden="true"><path class="metal" d="M10 20H410V52H10Z"/><path class="metal" d="M10 66H150V140H270V66H410V160H10Z"/><rect class="oring" x="168" y="52" width="70" height="88" rx="35"/><path class="dim" d="M150 150H270M150 145V155M270 145V155"/><text x="210" y="166" text-anchor="middle">G</text><path class="dim" d="M290 52V140M285 52H295M285 140H295"/><text x="298" y="100">L</text><path class="dim" d="M370 52V66M365 52H375M365 66H375"/><text x="380" y="63">E/2</text><path class="dim" d="M120 52V140" stroke-dasharray="3 3"/><text x="40" y="100">CS &gt; L</text></svg>
+<dl>
+<dt>Einbautiefe L</dt><dd>Abstand vom Nutgrund zur Gegenfläche; bei radialen Dichtungen einschließlich Radialspiel, bei Flanschdichtungen einschließlich Flanschspalt.</dd>
+<dt>Nutbreite G</dt><dd>Platz für die seitliche Verformung des O-Rings, für Quellung und für Stützringe.</dd>
+<dt>Spiel E</dt><dd>Durchmesserspiel zwischen den bewegten oder gefügten Teilen (E/2 je Seite): der Extrusionsweg unter Druck.</dd>
+<dt>Verpressung</dt><dd>(d2 − L) / d2: wie stark die Schnur gequetscht wird. Zu wenig leckt, zu viel führt zu hoher Reibung, Druckverformungsrest und Beschädigung. Statisch 12–30 %, dynamisch 8–16 %.</dd>
+<dt>Nutfüllung</dt><dd>Querschnittsfläche des O-Rings / Nutfläche. Etwa 75 % anstreben und unter 85 % bleiben, damit Platz für Quellung und Wärmeausdehnung bleibt.</dd>
+<dt>Dehnung</dt><dd>Wie stark der Innendurchmesser bei der Montage gedehnt wird. Unter 5 % halten (3 % bei Flanschdichtungen); Dehnung flacht auch die Schnurstärke ab.</dd>
+<dt>Grenzfall</dt><dd>Alle Toleranzen an ihrer ungünstigsten Grenze: der kleinste Ring im tiefsten Einbauraum und umgekehrt.</dd>
+</dl>
+<h3>Ergebnisse lesen</h3>
+<ul>
+<li>Das Kennzeichen zeigt <b>OK</b>, <b>Prüfen</b> (Warnungen) oder <b>Problem</b> (Fehler). Jede Warnung sagt, was zu ändern ist.</li>
+<li><b>Empfohlene Nut</b> vergleicht Ihren Entwurf mit den Richtwerten; ✓ liegt innerhalb, ! außerhalb.</li>
+<li>Die Bibliotheken unten enthalten alle O-Ring-Größen, die Nut-Richtwerttabellen und die Werkstoffe. Zeile anklicken, um sie zu verwenden.</li>
+<li>Die ⓘ-Symbole erklären einzelne Eingaben. <b>Link kopieren</b> speichert den ganzen Entwurf in einem Link; der <b>Einheitenumrechner</b> rechnet Längen, Drücke und Temperaturen um.</li>
+</ul>
+<p class="about-meta">Das Werkzeug folgt den öffentlichen Auslegungsrichtlinien von Parker und ERIKS. Kritische Dichtstellen immer mit dem Dichtungshersteller und durch Versuche bestätigen.</p>`,
+      nl: `<h2 id="help-title">Zo gebruikt u het O-ring-groefontwerp</h2>
+<p>Nieuw hier? Kies in de werkbalk een voorbeeld via <b>Toepassingsvoorbeeld laden…</b>, verander dan telkens één waarde en kijk naar de resultaten.</p>
+<h3>Vier stappen</h3>
+<ol>
+<li><b>Toepassing</b>: kies het type afdichting. <i>Zuiger</i>: groef in het binnendeel, dicht af tegen een boring. <i>Stang</i>: groef in het huis, dicht af tegen een stang of as. <i>Vlak</i>: groef in een vlak onder een deksel. <i>Zwaluwstaart</i>: ondersneden vlakgroef die de O-ring vasthoudt. <i>Inschroefpoort</i>: O-ring van een buisfitting met cilindrische schroefdraad. Kies daarna statische of dynamische beweging, de drukrichting (vlakafdichtingen) en de groefcontour: cirkel of afgeronde rechthoek.</li>
+<li><b>O-ring</b>: kies een normmaat (AS568, ISO 3601-1 of inschroefafdichtingen) of voer een eigen maat in, daarna materiaal en hardheid. <b>O-ring voorstellen</b> kiest de normmaat die het best bij uw inbouwmaten past.</li>
+<li><b>Inbouwruimte &amp; groef</b>: voer de hoofdmaat in (boring, stang, groefwand of hartlijn) en druk op <b>Aanbevolen groef toepassen</b> om de groef volgens de richtlijn van Parker of ERIKS te dimensioneren. Pas maten en toleranties aan uw tekening aan.</li>
+<li><b>Bedrijfsomstandigheden</b>: druk, temperatuurbereik en de volumezwelling van de O-ring in uw medium.</li>
+</ol>
+<h3>De inbouwruimte</h3>
+<svg viewBox="0 0 420 170" aria-hidden="true"><path class="metal" d="M10 20H410V52H10Z"/><path class="metal" d="M10 66H150V140H270V66H410V160H10Z"/><rect class="oring" x="168" y="52" width="70" height="88" rx="35"/><path class="dim" d="M150 150H270M150 145V155M270 145V155"/><text x="210" y="166" text-anchor="middle">G</text><path class="dim" d="M290 52V140M285 52H295M285 140H295"/><text x="298" y="100">L</text><path class="dim" d="M370 52V66M365 52H375M365 66H375"/><text x="380" y="63">E/2</text><path class="dim" d="M120 52V140" stroke-dasharray="3 3"/><text x="40" y="100">CS &gt; L</text></svg>
+<dl>
+<dt>Inbouwdiepte L</dt><dd>Afstand van de groefbodem tot het tegenvlak; bij radiale afdichtingen inclusief radiale speling, bij vlakafdichtingen inclusief flensspleet.</dd>
+<dt>Groefbreedte G</dt><dd>Ruimte voor zijdelingse vervorming van de O-ring, voor zwelling en voor steunringen.</dd>
+<dt>Speling E</dt><dd>Diametrale speling tussen de bewegende of samengevoegde delen (E/2 per zijde): de extrusieweg onder druk.</dd>
+<dt>Samendrukking</dt><dd>(CS − L) / CS: hoeveel de koord wordt ingedrukt. Te weinig lekt, te veel geeft hoge wrijving, blijvende vervorming en beschadiging. Statisch 12–30 %, dynamisch 8–16 %.</dd>
+<dt>Groefvulling</dt><dd>Doorsnede-oppervlak van de O-ring / groefoppervlak. Streef naar ongeveer 75 % en blijf onder 85 %, zodat er ruimte is voor zwelling en thermische uitzetting.</dd>
+<dt>Rek</dt><dd>Hoeveel de binnendiameter bij montage wordt gerekt. Houd onder 5 % (3 % bij vlakafdichtingen); rek maakt de koorddikte ook platter.</dd>
+<dt>Ongunstigste geval</dt><dd>Alle toleranties op hun ongunstigste grens: de kleinste ring in de diepste inbouwruimte en omgekeerd.</dd>
+</dl>
+<h3>De resultaten lezen</h3>
+<ul>
+<li>Het label toont <b>OK</b>, <b>Controleren</b> (waarschuwingen) of <b>Probleem</b> (fouten). Elke waarschuwing zegt wat u moet veranderen.</li>
+<li><b>Aanbevolen groef</b> vergelijkt uw ontwerp met de richtlijnwaarden; ✓ valt binnen de richtlijn, ! erbuiten.</li>
+<li>De bibliotheken onderaan bevatten alle O-ringmaten, de groefrichtlijntabellen en de materialen. Klik op een rij om die te gebruiken.</li>
+<li>De ⓘ-pictogrammen lichten afzonderlijke invoer toe. <b>Link kopiëren</b> bewaart het hele ontwerp in een link; de <b>eenhedenomrekenaar</b> rekent lengtes, drukken en temperaturen om.</li>
+</ul>
+<p class="about-meta">De tool volgt de openbare ontwerprichtlijnen van Parker en ERIKS. Bevestig kritische afdichtingen altijd met de leverancier en door testen.</p>`,
+      tr: `<h2 id="help-title">O-Ring Kanal Tasarımı nasıl kullanılır</h2>
+<p>Yeni misiniz? Araç çubuğundaki <b>Uygulama örneği yükle…</b> menüsünden bir örnek seçin, sonra değerleri tek tek değiştirip sonuçları izleyin.</p>
+<h3>Dört adım</h3>
+<ol>
+<li><b>Uygulama</b>: sızdırmazlık tipini seçin. <i>Piston</i>: kanal iç parçada, deliğe karşı sızdırmazlık. <i>Mil</i>: kanal gövdede, mile veya şafta karşı sızdırmazlık. <i>Yüzey</i>: kapak altında düz yüzeydeki kanal. <i>Kırlangıç</i>: O-ringi tutan, alttan kesilmiş yüzey kanalı. <i>Boss port</i>: düz dişli boru bağlantısının O-ringi. Sonra statik veya dinamik hareketi, basınç yönünü (yüzey sızdırmazlığı) ve kanal konturunu seçin: daire veya yuvarlatılmış dikdörtgen.</li>
+<li><b>O-ring</b>: standart bir ölçü seçin (AS568, ISO 3601-1 veya boss sızdırmazlıkları) ya da özel ölçü girin, ardından malzeme ve sertlik. <b>O-ring öner</b> parçanıza en uygun standart ölçüyü seçer.</li>
+<li><b>Parça ve kanal</b>: ana ölçüyü girin (delik, mil, kanal duvarı veya merkez hattı) ve kanalı Parker veya ERIKS kılavuzuna göre boyutlandırmak için <b>Önerilen kanalı uygula</b>'ya basın. Ölçüleri ve toleransları çiziminize göre düzeltin.</li>
+<li><b>Çalışma koşulları</b>: basınç, sıcaklık aralığı ve O-ringin akışkanınızdaki hacimsel şişmesi.</li>
+</ol>
+<h3>Yuva</h3>
+<svg viewBox="0 0 420 170" aria-hidden="true"><path class="metal" d="M10 20H410V52H10Z"/><path class="metal" d="M10 66H150V140H270V66H410V160H10Z"/><rect class="oring" x="168" y="52" width="70" height="88" rx="35"/><path class="dim" d="M150 150H270M150 145V155M270 145V155"/><text x="210" y="166" text-anchor="middle">G</text><path class="dim" d="M290 52V140M285 52H295M285 140H295"/><text x="298" y="100">L</text><path class="dim" d="M370 52V66M365 52H375M365 66H375"/><text x="380" y="63">E/2</text><path class="dim" d="M120 52V140" stroke-dasharray="3 3"/><text x="40" y="100">CS &gt; L</text></svg>
+<dl>
+<dt>Yuva derinliği L</dt><dd>Kanal tabanından karşı yüzeye mesafe; radyal sızdırmazlıkta radyal boşluk, yüzey sızdırmazlığında flanş boşluğu dahildir.</dd>
+<dt>Kanal genişliği G</dt><dd>O-ringin yana şekil değiştirmesi, şişme ve destek halkaları için yer.</dd>
+<dt>Boşluk E</dt><dd>Hareketli veya birleşen parçalar arasındaki çapsal boşluk (her tarafta E/2): basınç altında ekstrüzyon yolu.</dd>
+<dt>Sıkıştırma</dt><dd>(CS − L) / CS: kesitin ne kadar ezildiği. Az olursa kaçırır, fazla olursa yüksek sürtünme, kalıcı deformasyon ve hasar olur. Statik %12–30, dinamik %8–16.</dd>
+<dt>Kanal doluluğu</dt><dd>O-ring kesit alanı / yuva alanı. Yaklaşık %75 hedefleyin ve %85'in altında kalın; şişme ve ısıl genleşme için yer kalsın.</dd>
+<dt>Gerilme</dt><dd>Montajda O-ring iç çapının ne kadar gerildiği. %5'in altında tutun (yüzey sızdırmazlığında %3); gerilme kesiti de yassılaştırır.</dd>
+<dt>En kötü durum</dt><dd>Tüm toleranslar en olumsuz sınırda: en derin yuvada en küçük halka ve tersi.</dd>
+</dl>
+<h3>Sonuçları okumak</h3>
+<ul>
+<li>Etiket <b>UYGUN</b>, <b>Kontrol</b> (uyarılar) veya <b>Sorun</b> (hatalar) gösterir. Her uyarı neyin değişmesi gerektiğini söyler.</li>
+<li><b>Önerilen kanal</b> tasarımınızı kılavuz değerleriyle karşılaştırır; ✓ kılavuz içinde, ! dışında demektir.</li>
+<li>Alttaki kütüphanelerde tüm O-ring ölçüleri, kanal kılavuz tabloları ve malzemeler bulunur. Kullanmak için bir satıra tıklayın.</li>
+<li>ⓘ simgeleri tek tek girdileri açıklar. <b>Bağlantıyı kopyala</b> tüm tasarımı bir bağlantıda saklar; <b>Birim dönüştürücü</b> uzunluk, basınç ve sıcaklık dönüştürür.</li>
+</ul>
+<p class="about-meta">Araç, Parker ve ERIKS'in herkese açık tasarım kılavuzlarını izler. Kritik sızdırmazlıkları her zaman tedarikçiyle ve testle doğrulayın.</p>`,
     },
     notes: {
       en: `<ul>
@@ -423,40 +634,44 @@
 <li><b>Stretch</b> flattens the cross-section; the reduction follows Parker's empirical curve (ORD 5700, fig. 3-3). Piston grooves: stretch on the groove bottom. Rod grooves: stretch on the rod, or circumferential compression of the centreline. Face grooves: the O-ring should seat on the outer wall for internal pressure and on the inner wall for external pressure.</li>
 <li><b>Gland fill</b> = installed cross-section area / gland area (bottom radii removed); volume is conserved when the ring is stretched. Hot fill adds the O-ring's volumetric thermal expansion and the volume swell; the metal is assumed not to expand (conservative).</li>
 <li><b>Rounded rectangles</b>: perimeter = 2(L + W) − (8 − 2π)R. Stretch and fit compare O-ring and groove perimeters. A centreline corner radius of at least 3 × cross-section is a common rule of thumb.</li>
+<li><b>Dovetail grooves</b>: gland area = depth × opening width + depth² · tan(undercut angle); the O-ring mean diameter should match the groove mean diameter (Parker Design Chart 4-4, ERIKS Table 3.C-3). <b>Boss seals</b>: AS568 -9xx rings with port and MS33656 fitting-end dimensions from the ERIKS handbook; the check covers the stretch on the fitting undercut and the material limits.</li>
 <li><b>Guidelines</b>: Parker ORD 5700 Design Tables 4-2 (industrial static), 4-3 (face seals), 5-2 and 5-2-b (industrial reciprocating, inch and metric); ERIKS O-ring Technical Handbook section 12 Tables 3.C-1 (face, metric), 3.C-2 (static radial, metric), 3.D-1 (dynamic, metric), 3.D-2 (back-up rings) and 3.B-1a (clearance). Other cross-sections are interpolated from these tables.</li>
 <li><b>Limits used</b>: static compression 12–30 % (max. 30 %, Parker), dynamic 8–16 %; minimum squeeze ≈ 0.2 mm; gland fill 60–85 % nominal, optimum 75 %, at least 10 % void; installed stretch ≤ 5 % (Parker), ≤ 3 % for face seals (ERIKS); clearances halved for silicone and fluorosilicone; back-up rings above 103.5 bar static (Parker) or 50 bar dynamic (ERIKS).</li>
 <li><b>Sizes</b>: AS568 dimensions per AS568A as listed in Parker ORD 5700 Table 9-1; ISO 3601-1 series G per Parker Table 9-6. Material temperature ranges and expansion coefficients are typical values (Parker Table 2-5).</li>
-<li>Not covered: rotary seals, dovetail grooves, boss seals, friction and assembly force, extrusion charts versus pressure and hardness, thermal expansion of the housing. Design guides are guidelines; confirm with the seal supplier.</li>
+<li>Not covered: rotary seals, pneumatic floating rings, crush seals, friction and assembly force, extrusion charts versus pressure and hardness, thermal expansion of the housing. Design guides are guidelines; confirm with the seal supplier.</li>
 </ul>`,
       de: `<ul>
 <li><b>Verpressung</b> = (Schnurstärke − Einbautiefe) / Schnurstärke. Der ungünstigste Fall kombiniert die Toleranz der Schnurstärke, die Einbauraumtoleranzen und die Einbaudehnung. Optional werden die Teile um das volle Radialspiel versetzt (Exzentrizität).</li>
 <li><b>Dehnung</b> flacht die Schnurstärke ab; die Abnahme folgt der empirischen Kurve von Parker (ORD 5700, Abb. 3-3). Kolbennut: Dehnung auf dem Nutgrund. Stangennut: Dehnung auf der Stange oder Umfangsstauchung der Mittellinie. Flanschnut: der O-Ring soll bei Innendruck an der Außenwand und bei Außendruck an der Innenwand anliegen.</li>
 <li><b>Nutfüllung</b> = eingebaute Querschnittsfläche / Nutfläche (ohne Grundradien); bei Dehnung bleibt das Volumen erhalten. Die warme Füllung berücksichtigt die volumetrische Wärmeausdehnung des O-Rings und die Quellung; die Metallteile dehnen sich annahmegemäß nicht aus (konservativ).</li>
 <li><b>Gerundete Rechtecke</b>: Umfang = 2(L + W) − (8 − 2π)R. Dehnung und Sitz vergleichen die Umfänge von O-Ring und Nut. Ein Eckenradius an der Mittellinie von mindestens 3 × Schnurstärke ist eine übliche Faustregel.</li>
+<li><b>Schwalbenschwanznuten</b>: Nutfläche = Tiefe × Öffnungsbreite + Tiefe² · tan(Hinterschnittwinkel); der mittlere O-Ring-Durchmesser soll dem mittleren Nutdurchmesser entsprechen (Parker Design Chart 4-4, ERIKS Tabelle 3.C-3). <b>Einschraubdichtungen</b>: AS568-Ringe -9xx mit Port- und MS33656-Verschraubungsmaßen aus dem ERIKS-Handbuch; geprüft werden die Dehnung auf dem Einstich und die Werkstoffgrenzen.</li>
 <li><b>Richtlinien</b>: Parker ORD 5700 Design Tables 4-2 (industriell statisch), 4-3 (Flanschdichtungen), 5-2 und 5-2-b (industriell hin- und hergehend, Zoll und metrisch); ERIKS O-ring Technical Handbook Abschnitt 12 Tabellen 3.C-1 (Flansch, metrisch), 3.C-2 (statisch radial, metrisch), 3.D-1 (dynamisch, metrisch), 3.D-2 (Stützringe) und 3.B-1a (Spiel). Andere Schnurstärken werden aus diesen Tabellen interpoliert.</li>
 <li><b>Verwendete Grenzen</b>: statische Verpressung 12–30 % (max. 30 %, Parker), dynamisch 8–16 %; Mindestverpressung ≈ 0,2 mm; Nutfüllung nominal 60–85 %, optimal 75 %, mindestens 10 % Freiraum; Einbaudehnung ≤ 5 % (Parker), ≤ 3 % bei Flanschdichtungen (ERIKS); Spiele für Silikon und Fluorsilikon halbiert; Stützringe über 103,5 bar statisch (Parker) bzw. 50 bar dynamisch (ERIKS).</li>
 <li><b>Größen</b>: AS568-Maße nach AS568A aus Parker ORD 5700 Tabelle 9-1; ISO 3601-1 Reihe G nach Parker Tabelle 9-6. Temperaturbereiche und Ausdehnungskoeffizienten der Werkstoffe sind typische Werte (Parker Tabelle 2-5).</li>
-<li>Nicht abgedeckt: rotierende Dichtungen, Schwalbenschwanznuten, Einschraubdichtungen, Reibung und Montagekraft, Extrusionsdiagramme über Druck und Härte, Wärmeausdehnung des Gehäuses. Auslegungsrichtlinien sind Richtwerte; mit dem Dichtungshersteller bestätigen.</li>
+<li>Nicht abgedeckt: rotierende Dichtungen, pneumatische schwimmende Ringe, Quetschdichtungen, Reibung und Montagekraft, Extrusionsdiagramme über Druck und Härte, Wärmeausdehnung des Gehäuses. Auslegungsrichtlinien sind Richtwerte; mit dem Dichtungshersteller bestätigen.</li>
 </ul>`,
       nl: `<ul>
 <li><b>Samendrukking</b> = (koorddikte − inbouwdiepte) / koorddikte. Het ongunstigste geval combineert de tolerantie van de koorddikte, de toleranties van de inbouwruimte en de inbouwrek. Optioneel worden de delen over de volle radiale speling verschoven (excentriciteit).</li>
 <li><b>Rek</b> maakt de doorsnede platter; de afname volgt de empirische curve van Parker (ORD 5700, fig. 3-3). Zuigergroef: rek op de groefbodem. Stanggroef: rek op de stang of omtreksstuiking van de hartlijn. Vlakgroef: de O-ring moet bij inwendige druk tegen de buitenwand en bij uitwendige druk tegen de binnenwand liggen.</li>
 <li><b>Groefvulling</b> = ingebouwd doorsnede-oppervlak / groefoppervlak (zonder bodemradii); bij rek blijft het volume gelijk. De warme vulling telt de volumetrische thermische uitzetting van de O-ring en de zwelling op; het metaal zet volgens de aanname niet uit (conservatief).</li>
 <li><b>Afgeronde rechthoeken</b>: omtrek = 2(L + W) − (8 − 2π)R. Rek en passing vergelijken de omtrekken van O-ring en groef. Een hoekradius op de hartlijn van minstens 3 × koorddikte is een gangbare vuistregel.</li>
+<li><b>Zwaluwstaartgroeven</b>: groefoppervlak = diepte × openingsbreedte + diepte² · tan(ondersnijdingshoek); de gemiddelde O-ringdiameter moet gelijk zijn aan de gemiddelde groefdiameter (Parker Design Chart 4-4, ERIKS tabel 3.C-3). <b>Inschroefafdichtingen</b>: AS568-ringen -9xx met poort- en MS33656-fittingmaten uit het ERIKS-handboek; gecontroleerd worden de rek op de insteek en de materiaalgrenzen.</li>
 <li><b>Richtlijnen</b>: Parker ORD 5700 Design Tables 4-2 (industrieel statisch), 4-3 (vlakafdichtingen), 5-2 en 5-2-b (industrieel heen-en-weer, inch en metrisch); ERIKS O-ring Technical Handbook hoofdstuk 12 tabellen 3.C-1 (vlak, metrisch), 3.C-2 (statisch radiaal, metrisch), 3.D-1 (dynamisch, metrisch), 3.D-2 (steunringen) en 3.B-1a (speling). Andere koorddiktes worden uit deze tabellen geïnterpoleerd.</li>
 <li><b>Gebruikte grenzen</b>: statische samendrukking 12–30 % (max. 30 %, Parker), dynamisch 8–16 %; minimale indrukking ≈ 0,2 mm; groefvulling nominaal 60–85 %, optimaal 75 %, minstens 10 % vrije ruimte; inbouwrek ≤ 5 % (Parker), ≤ 3 % bij vlakafdichtingen (ERIKS); spelingen gehalveerd voor siliconen en fluorsiliconen; steunringen boven 103,5 bar statisch (Parker) of 50 bar dynamisch (ERIKS).</li>
 <li><b>Maten</b>: AS568-maten volgens AS568A uit Parker ORD 5700 tabel 9-1; ISO 3601-1 serie G volgens Parker tabel 9-6. Temperatuurbereiken en uitzettingscoëfficiënten van de materialen zijn typische waarden (Parker tabel 2-5).</li>
-<li>Niet behandeld: roterende afdichtingen, zwaluwstaartgroeven, inschroefafdichtingen, wrijving en montagekracht, extrusiediagrammen tegen druk en hardheid, thermische uitzetting van het huis. Ontwerprichtlijnen zijn richtwaarden; bevestig met de leverancier.</li>
+<li>Niet behandeld: roterende afdichtingen, pneumatische zwevende ringen, knelafdichtingen, wrijving en montagekracht, extrusiediagrammen tegen druk en hardheid, thermische uitzetting van het huis. Ontwerprichtlijnen zijn richtwaarden; bevestig met de leverancier.</li>
 </ul>`,
       tr: `<ul>
 <li><b>Sıkıştırma</b> = (kesit − yuva derinliği) / kesit. En kötü durum, O-ring kesit toleransını, yuva toleranslarını ve montaj gerilmesini birleştirir. İsteğe bağlı olarak parçalar radyal boşluk kadar tamamen kaydırılır (eksen kaçıklığı).</li>
 <li><b>Gerilme</b> kesiti yassılaştırır; azalma Parker'ın deneysel eğrisini izler (ORD 5700, şekil 3-3). Piston kanalı: kanal tabanında gerilme. Mil kanalı: mil üzerinde gerilme veya merkez hattının çevresel sıkışması. Yüzey kanalı: O-ring iç basınçta dış duvara, dış basınçta iç duvara oturmalıdır.</li>
 <li><b>Kanal doluluğu</b> = montajlı kesit alanı / yuva alanı (taban yarıçapları hariç); halka gerildiğinde hacim korunur. Sıcak doluluk, O-ringin hacimsel ısıl genleşmesini ve şişmeyi ekler; metalin genleşmediği varsayılır (güvenli tarafta).</li>
 <li><b>Yuvarlatılmış dikdörtgenler</b>: çevre = 2(L + W) − (8 − 2π)R. Gerilme ve oturma, O-ring ile kanal çevrelerini karşılaştırır. Merkez hattında en az 3 × kesit köşe yarıçapı yaygın bir pratik kuraldır.</li>
+<li><b>Kırlangıç kuyruğu kanallar</b>: yuva alanı = derinlik × ağız genişliği + derinlik² · tan(alttan kesme açısı); O-ring ortalama çapı kanal ortalama çapına eşit olmalıdır (Parker Design Chart 4-4, ERIKS Tablo 3.C-3). <b>Boss sızdırmazlıkları</b>: ERIKS el kitabından port ve MS33656 bağlantı ucu ölçüleriyle AS568 -9xx halkalar; bağlantı boynundaki gerilme ve malzeme sınırları kontrol edilir.</li>
 <li><b>Kılavuzlar</b>: Parker ORD 5700 Design Tables 4-2 (endüstriyel statik), 4-3 (yüzey sızdırmazlığı), 5-2 ve 5-2-b (endüstriyel doğrusal hareket, inç ve metrik); ERIKS O-ring Technical Handbook bölüm 12 Tablo 3.C-1 (yüzey, metrik), 3.C-2 (statik radyal, metrik), 3.D-1 (dinamik, metrik), 3.D-2 (destek halkaları) ve 3.B-1a (boşluk). Diğer kesitler bu tablolardan enterpolasyonla bulunur.</li>
 <li><b>Kullanılan sınırlar</b>: statik sıkıştırma %12–30 (maks. %30, Parker), dinamik %8–16; minimum ezilme ≈ 0,2 mm; nominal kanal doluluğu %60–85, ideal %75, en az %10 boşluk; montaj gerilmesi ≤ %5 (Parker), yüzey sızdırmazlığında ≤ %3 (ERIKS); silikon ve florosilikon için boşluklar yarıya indirilir; statikte 103,5 bar (Parker), dinamikte 50 bar (ERIKS) üzerinde destek halkası.</li>
 <li><b>Ölçüler</b>: AS568 ölçüleri AS568A'ya göre Parker ORD 5700 Tablo 9-1'den; ISO 3601-1 G serisi Parker Tablo 9-6'dan. Malzemelerin sıcaklık aralıkları ve genleşme katsayıları tipik değerlerdir (Parker Tablo 2-5).</li>
-<li>Kapsam dışı: döner sızdırmazlıklar, kırlangıç kuyruğu kanallar, boss sızdırmazlıkları, sürtünme ve montaj kuvveti, basınç ve sertliğe göre ekstrüzyon diyagramları, gövdenin ısıl genleşmesi. Tasarım kılavuzları rehber niteliğindedir; tedarikçiyle doğrulayın.</li>
+<li>Kapsam dışı: döner sızdırmazlıklar, pnömatik yüzer halkalar, ezme sızdırmazlıkları, sürtünme ve montaj kuvveti, basınç ve sertliğe göre ekstrüzyon diyagramları, gövdenin ısıl genleşmesi. Tasarım kılavuzları rehber niteliğindedir; tedarikçiyle doğrulayın.</li>
 </ul>`,
     },
   };

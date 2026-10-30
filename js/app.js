@@ -19,12 +19,14 @@
     A: 32, B1: 0, C: 0, B: 0, A1: 0, D: 0,
     Lc: 80, Wc: 50, Rc: 15, depth: 0, E: 0,
     Do: 0, Lo: 120, Wo: 80, Ro: 20, h: 0, gap: 0,
+    Dm: 0, Lm: 150, Wm: 100, Rm: 25, angle: 24, F: 0,
     G: 0, r: 0,
     tolD: 0.025, tolH: 0.03, tolG: 0.05, ecc: false,
     pressure: 50, tMin: -20, tMax: 80, swell: 0,
   };
   let state = JSON.parse(JSON.stringify(DEFAULTS));
   let lastRes = null;
+  let lastRing = null; // O-ring in use before switching to a boss port, restored when leaving it
   let guideSrc = null; // groove library source chosen in its card (null = follow the design)
 
   const sizeByCode = (series, code) => Data.SIZES.find((s) => s.series === series && s.code === code);
@@ -59,7 +61,7 @@
     if (U.system === 'IMP' && s.inch) return `${s.code} · ${s.inch.id.toFixed(3)} × ${s.inch.cs.toFixed(3)} in`;
     const id = U.fmtNumber(U.toDisplay('length', s.id), U.system === 'IMP' ? 3 : 2);
     const cs = U.fmtNumber(U.toDisplay('length', s.cs), U.system === 'IMP' ? 3 : 2);
-    return s.series === 'AS568' ? `${s.code} · ${id} × ${cs} ${unit}` : `${id} × ${cs} ${unit}`;
+    return s.series === 'ISO3601' ? `${id} × ${cs} ${unit}` : `${s.code} · ${id} × ${cs} ${unit}`;
   }
 
   function fillCsFilter() {
@@ -101,6 +103,13 @@
     if (prevCs !== undefined && !keepGroove) fitHardwareToRing(Math.abs(prevCs - s.cs) > 1e-9);
   }
 
+  /** Code of the size in a series closest to the current ring (cross-section first). */
+  function nearestCode(series) {
+    const r = state.ring;
+    const score = (z) => Math.abs(z.cs - r.cs) + Math.abs(z.id - r.id) * 0.1;
+    return seriesSizes(series).reduce((a, b) => (score(b) < score(a) ? b : a)).code;
+  }
+
   // ---------- Hardware seeding ----------
   /**
    * After a change of seal type or outline: if the current hardware is far off
@@ -108,11 +117,12 @@
    * rectangles, keeping their proportions) and apply the recommended groove.
    */
   function fitHardwareToRing(forceGroove) {
+    if (state.type === 'boss') { Object.assign(state, Calc.recommend(state)); return; }
     ensureHardware(forceGroove === true);
     const res = Calc.calc(state);
     const L0 = Data.LIMITS;
     const far = !res.valid || res.fill.max >= 1 || res.squeeze.min <= 0
-      || res.stretch.max > (state.type === 'face' ? L0.stretchFaceMax : L0.stretchMax) / 100
+      || res.stretch.max > (Calc.isAxial(state) ? L0.stretchFaceMax : L0.stretchMax) / 100
       || res.circ.max > L0.circCompressionMax / 100 || res.loose > 0.005
       || (state.type === 'piston' && res.stretch.min < 0);
     if (!far) return;
@@ -146,6 +156,10 @@
       if (state.type === 'piston') state.A = roundTo(r.id * 1.02 + 2 * L, 0.05);
       if (state.type === 'rod') state.B = roundTo((r.id + r.idTol) * 1.01, 0.05);
       if (state.type === 'face') state.Do = 0;
+      if (state.type === 'dovetail') state.Dm = 0;
+    } else if (state.type === 'dovetail') {
+      targetP = Math.PI * (r.id + r.cs);
+      scaleTo(['Lm', 'Wm', 'Rm'], () => Calc.rrPerimeter(state.Lm, state.Wm, state.Rm), minR);
     } else if (state.type === 'face') {
       targetP = Math.PI * (r.id + 2 * r.cs);
       const G = Calc.guideline(r.cs, 'face', { source: state.source, medium: state.medium, csTol: r.csTol }).Gmid;
@@ -173,12 +187,15 @@
     if (state.type === 'piston' && state.shape === 'circle' && !(state.A > 0)) state.A = roundTo(od + 0.5, 0.5);
     if (state.type === 'rod' && state.shape === 'circle' && !(state.B > 0)) state.B = roundTo(r.id * 1.02, 0.1);
     if (state.type === 'face' && state.shape === 'circle' && !(state.Do > 0)) state.Do = round3(od);
+    if (state.type === 'dovetail' && state.shape === 'circle' && !(state.Dm > 0)) state.Dm = round3(r.id + r.cs);
+    if (state.type === 'boss') { if (force || !(state.F > 0)) Object.assign(state, Calc.recommend(state)); return; }
     const needs = force
       || !(state.G > 0)
       || (state.type === 'piston' && state.shape === 'circle' && !(state.B1 > 0 && state.C > 0))
       || (state.type === 'rod' && state.shape === 'circle' && !(state.A1 > 0 && state.D > 0))
-      || (state.type !== 'face' && state.shape === 'rect' && !(state.depth > 0))
-      || (state.type === 'face' && !(state.h > 0));
+      || (!Calc.isAxial(state) && state.shape === 'rect' && !(state.depth > 0))
+      || (Calc.isAxial(state) && !(state.h > 0))
+      || (state.type === 'dovetail' && !(state.angle > 0));
     if (needs) Object.assign(state, Calc.recommend(state));
   }
 
@@ -241,12 +258,11 @@
         const v = el.value;
         if (v === 'custom') { state.series = 'custom'; state.size = ''; }
         else {
-          const cs = state.ring.cs;
-          const list = seriesSizes(v);
-          // keep a similar size when switching standards
-          let best = list[0];
-          for (const s of list) if (Math.abs(s.cs - cs) + Math.abs(s.id - state.ring.id) * 0.1 < Math.abs(best.cs - cs) + Math.abs(best.id - state.ring.id) * 0.1) best = s;
-          selectSize(v, best.code);
+          // boss sizes belong to the boss port type and the other way round
+          if (v === 'BOSS' && state.type !== 'boss') state.type = 'boss';
+          else if (v !== 'BOSS' && state.type === 'boss') state.type = 'piston';
+          selectSize(v, nearestCode(v));
+          if (v === 'BOSS' || state.type === 'piston') fitHardwareToRing(true);
         }
         fillCsFilter(); fillSizes(); render();
       } else if (el.id === 'cs-filter') {
@@ -285,8 +301,19 @@
     $('#type-picker').addEventListener('click', (e) => {
       const b = e.target.closest('button[role="radio"]');
       if (!b) return;
+      const prev = state.type;
       state.type = b.dataset.type;
+      // boss seals use their own -9xx sizes; leaving them returns to a similar AS568 size
+      if (state.type === 'boss' && state.series !== 'BOSS') {
+        if (state.series !== 'custom') lastRing = { series: state.series, size: state.size };
+        selectSize('BOSS', '-906', true);
+      } else if (state.type !== 'boss' && (prev === 'boss' || state.series === 'BOSS')) {
+        if (lastRing) selectSize(lastRing.series, lastRing.size, true);
+        else selectSize('AS568', nearestCode('AS568'), true);
+      }
+      if (state.type === 'dovetail' || state.type === 'boss') state.motion = 'static';
       fitHardwareToRing(true); // each seal type keeps its own dimensions; size its groove for the current ring and motion
+      fillCsFilter(); fillSizes();
       render();
     });
     // static and dynamic glands differ in depth: re-apply the guideline
@@ -300,7 +327,7 @@
       toast(t('Groove set to the guideline values'));
     });
     $('#suggest').addEventListener('click', () => {
-      const series = state.series === 'custom' ? 'AS568' : state.series;
+      const series = state.series === 'custom' || state.series === 'BOSS' ? 'AS568' : state.series;
       const pref = parseFloat($('#cs-filter').value);
       const best = Calc.suggest(state, seriesSizes(series), isFinite(pref) ? pref : null);
       if (!best) { toast(t('No suitable standard O-ring found')); return; }
@@ -328,13 +355,14 @@
   }
 
   function visibility() {
-    const radial = state.type !== 'face';
+    const radial = state.type === 'piston' || state.type === 'rod';
+    if (state.type === 'boss') state.shape = 'circle';
     const tokens = new Set([
-      radial ? 'radial' : 'face',
+      radial ? 'radial' : state.type,
+      Calc.isAxial(state) ? 'axial' : '',
       state.series !== 'custom' ? 'standard' : 'custom',
       `${state.type}-${state.shape}`,
       radial && state.shape === 'rect' ? 'radial-rect' : '',
-      !radial ? `face-${state.shape}` : '',
     ]);
     for (const el of $$('[data-show]')) {
       const show = el.dataset.show.split(/\s+/).some((k) => tokens.has(k));
@@ -342,6 +370,8 @@
     }
     $('#contour-label').textContent = t(state.type === 'rod' ? 'Rod length' : 'Bore length');
     $('#contour-label-w').textContent = t(state.type === 'rod' ? 'Rod width' : 'Bore width');
+    $('#g-label').textContent = t(state.type === 'dovetail' ? 'Width at the opening' : 'Groove width');
+    $('#apply-rec').textContent = t(state.type === 'boss' ? 'Apply standard fitting dimensions' : 'Apply recommended groove');
   }
 
   function render() {
@@ -350,7 +380,7 @@
     setSeg('#pdir', 'pdir', state.pdir);
     setSeg('#shape', 'shape', state.shape);
     setSeg('#units', 'units', U.system);
-    if (state.type === 'face') state.motion = 'static';
+    if (state.type !== 'piston' && state.type !== 'rod') state.motion = 'static';
     visibility();
     writeInputs();
     for (const el of $$('label .u[data-unit]')) el.textContent = '(' + U.label(el.dataset.unit) + ')';
@@ -371,9 +401,25 @@
   function renderHero(res) {
     const hv = $('#hero-value'), sub = $('#hero-sub'), side = $('#hero-side'), chip = $('#status-chip');
     side.textContent = '';
+    $('#hero-label').textContent = t(res.kind === 'boss' ? 'Installed stretch (nominal)' : 'Compression (nominal)');
     if (!res.valid) {
       hv.textContent = '—'; hv.className = 'hero-value'; sub.textContent = '';
       chip.className = 'status-chip error'; chip.textContent = t('Check inputs');
+      return;
+    }
+    chip.className = 'status-chip ' + res.status;
+    chip.textContent = t(res.status === 'ok' ? 'OK' : res.status === 'warn' ? 'Check' : 'Problem');
+    hv.className = 'hero-value ' + res.status;
+    if (res.kind === 'boss') {
+      hv.textContent = fPct(res.stretch.nom);
+      sub.textContent = t('Worst case {min} … {max} · on the fitting undercut', { min: fPct(res.stretch.min), max: fPct(res.stretch.max) });
+      const b = res.boss;
+      for (const [k, v] of [[t('Tube OD'), b.tube + ' in'], [t('Thread'), b.thread], [t('Cone angle'), b.port.Z + '°']]) {
+        const d = document.createElement('div');
+        const dt = document.createElement('dt'); dt.textContent = k;
+        const dd = document.createElement('dd'); dd.textContent = v;
+        d.append(dt, dd); side.appendChild(d);
+      }
       return;
     }
     const sq = res.squeeze;
@@ -384,8 +430,8 @@
     });
     const items = [
       [t('Gland fill'), fPct(res.fill.nom, 0)],
-      [t(state.type === 'face' ? 'Seat fit' : 'ID stretch'), state.type === 'face' ? faceFit(res) : fPct(res.stretch.nom)],
-      [t(state.type === 'face' ? 'Flange gap' : 'Radial clearance'), fL(res.gapR)],
+      [t(Calc.isAxial(state) ? 'Seat fit' : 'ID stretch'), Calc.isAxial(state) ? faceFit(res) : fPct(res.stretch.nom)],
+      [t(Calc.isAxial(state) ? 'Flange gap' : 'Radial clearance'), fL(res.gapR)],
     ];
     for (const [k, v] of items) {
       const d = document.createElement('div');
@@ -393,8 +439,6 @@
       const dd = document.createElement('dd'); dd.textContent = v;
       d.append(dt, dd); side.appendChild(d);
     }
-    chip.className = 'status-chip ' + res.status;
-    chip.textContent = t(res.status === 'ok' ? 'OK' : res.status === 'warn' ? 'Check' : 'Problem');
   }
 
   /** Face seals: describe how the ring seats on the primary groove wall. */
@@ -426,17 +470,29 @@
   function renderDrawings(res) {
     const s = state;
     if (!res.valid) { $('#section').textContent = ''; $('#plan').textContent = ''; return; }
+    $('#plan-card').hidden = s.type === 'boss';
+    $('.legend-key').hidden = s.type === 'boss';
+    if (s.type === 'boss') {
+      Drawing.boss($('#section'), {
+        labels: { title: t('Boss port'), port: t('Port (boss)'), fitting: t('Fitting'), oring: 'O-ring', cone: t('cone {z}°', { z: res.boss.port.Z }) },
+        thread: res.boss.thread,
+      });
+      $('#plan').textContent = '';
+      return;
+    }
     const names = {
       piston: ['Piston', 'Bore', 'axis ↓'],
       rod: ['Housing', 'Rod', 'axis ↑'],
       face: ['Flange', 'Cover', ''],
+      dovetail: ['Flange', 'Cover', ''],
     }[s.type];
     const pressureFrom = s.type === 'face' ? (s.pdir === 'external' ? 'right' : 'left') : 'left';
     const csEff = res.csE.nom;
     const area = Math.PI / 4 * s.ring.cs * s.ring.cs * (res.stretch.nom > 0 ? 1 / (1 + res.stretch.nom) : 1 + res.circ.nom);
     Drawing.section($('#section'), {
-      type: s.type, G: s.G, L: res.L.nom, gap: s.type === 'face' ? (s.gap || 0) : Math.max(0, res.gapR), r: s.r,
+      type: s.type, G: s.G, L: res.L.nom, gap: Calc.isAxial(s) ? (s.gap || 0) : Math.max(0, res.gapR), r: s.r,
       cs: s.ring.cs, csEff, area, pressureFrom, axisAbove: s.type === 'rod',
+      undercut: s.type === 'dovetail' ? res.geom.undercut : 0, centred: s.type === 'dovetail',
       labels: {
         title: t('Gland cross-section'), pressure: t('pressure'),
         groovePart: t(names[0]), matingPart: t(names[1]), axis: names[2] ? t(names[2]) : '',
@@ -448,11 +504,11 @@
     let outer, inner, offset;
     // installed ring width in the groove (area-conserving), used for the stroke width
     const w = res.L.nom > 0 && csEff > res.L.nom ? Math.min(s.G, Math.PI / 4 * s.ring.cs * s.ring.cs / res.L.nom) : csEff;
-    if (s.type === 'face') {
+    if (Calc.isAxial(s)) {
       const g = res.geom;
       if (s.shape === 'rect') { outer = g.outer; inner = g.inner; }
       else { outer = { D: g.outerD }; inner = { D: g.innerD }; }
-      offset = s.pdir === 'external' ? s.G - w / 2 : w / 2;
+      offset = s.type === 'dovetail' ? s.G / 2 : s.pdir === 'external' ? s.G - w / 2 : w / 2;
     } else if (s.shape === 'rect') {
       // radial: the ring centreline lies half a gland depth from either wall
       outer = res.geom.outer; inner = res.geom.seat; offset = res.L.nom / 2;
@@ -463,7 +519,7 @@
     }
     Drawing.plan($('#plan'), {
       outer, inner, ring: { offset, width: w },
-      labels: { title: t('Groove outline'), outer: s.type === 'face' ? t('groove') : s.type === 'piston' ? t('bore') : t('groove') },
+      labels: { title: t('Groove outline'), outer: s.type === 'piston' ? t('bore') : t('groove') },
       fmt: fL,
     });
   }
@@ -475,6 +531,7 @@
     box.textContent = '';
     if (!res.valid) return;
     const s = state, L = Data.LIMITS;
+    if (res.kind === 'boss') return renderMetricList(box, bossMetrics(res));
     const band = L.squeeze[res.kind];
     const lvl = (v, lo, hi) => (v < lo / 100 || v > hi / 100 ? 'warn' : '');
     const items = [
@@ -484,10 +541,17 @@
       metric(t('Gland fill nominal'), fPct(res.fill.nom, 0), t('recommended 60–85 %, optimum 75 %'), lvl(res.fill.nom, L.fillMin, L.fill.max)),
       metric(t('Gland fill worst case / hot'), `${fPct(res.fill.max, 0)} / ${fPct(res.fill.hot, 0)}`, t('at T max with swell'), res.fill.hot >= 1 ? 'error' : res.fill.max > L.fill.worstMax / 100 ? 'warn' : ''),
       metric(t('Gland depth L'), fL(res.L.nom), `${fL(res.L.min)} … ${fL(res.L.max)}`),
-      metric(t('Groove width G'), fL(s.G), `± ${fL(s.tolG)}`),
+      metric(t(s.type === 'dovetail' ? 'Width at the opening' : 'Groove width G'), fL(s.G), `± ${fL(s.tolG)}`),
       metric(t('Effective cross-section'), fL(res.csE.nom), t('after stretch (Parker fig. 3-3)')),
     ];
-    if (s.type === 'face') {
+    if (s.type === 'dovetail') {
+      const g = res.geom;
+      items.push(metric(t('Mean diameter fit'), faceFit(res), t('O-ring mean Ø vs. groove mean Ø'), Math.max(res.stretch.nom, res.circ.nom) > L.dovetailFitMax / 100 ? 'warn' : ''));
+      items.push(metric(t('Width at the bottom'), fL(s.G + 2 * g.undercut), t('undercut {v} per side', { v: fL(g.undercut) })));
+      items.push(metric(t('Retention'), fL(s.ring.cs - s.G), t('O-ring CS minus opening width'), s.G >= s.ring.cs - s.ring.csTol ? 'warn' : ''));
+      items.push(metric(t('Groove perimeter (centreline)'), fL(g.length), t('O-ring centreline {v}', { v: fL(Math.PI * (s.ring.id + s.ring.cs)) })));
+      if (s.shape === 'rect') items.push(metric(t('Centreline corner radius'), fL(g.centreRadius), t('min. {v}', { v: fL(L.cornerRadiusFactor * s.ring.cs) }), g.centreRadius < L.cornerRadiusFactor * s.ring.cs ? 'warn' : ''));
+    } else if (s.type === 'face') {
       items.push(metric(t('Seat fit on primary wall'), faceFit(res), t(s.pdir === 'external' ? 'ring ID vs. groove inner wall' : 'ring OD vs. groove outer wall')));
       const g = res.geom;
       if (s.shape === 'rect') {
@@ -509,6 +573,22 @@
     }
     items.push(metric(t('O-ring OD'), fL(res.ringOD), `ID ${fL(s.ring.id)} · CS ${fL(s.ring.cs)}`));
     items.push(metric(t('O-ring / gland volume'), `${U.format('volume', res.ringVolume)}`, t('gland {v}', { v: U.format('volume', res.glandVolume) })));
+    renderMetricList(box, items);
+  }
+
+  function bossMetrics(res) {
+    const s = state, b = res.boss, L = Data.LIMITS;
+    return [
+      metric(t('Installed stretch'), fPct(res.stretch.nom), `${fPct(res.stretch.min)} … ${fPct(res.stretch.max)}`, res.stretch.nom > L.stretchMax / 100 ? 'warn' : ''),
+      metric(t('Fitting undercut Ø F'), fL(s.F), t('standard {v}', { v: fL(b.fit.F * Data.IN) })),
+      metric(t('Effective cross-section'), fL(res.csE.nom), t('after stretch (Parker fig. 3-3)')),
+      metric(t('O-ring OD'), fL(res.ringOD), `ID ${fL(s.ring.id)} · CS ${fL(s.ring.cs)}`),
+      metric(t('Port cone Ø U'), fL(b.port.U * Data.IN), t('depth K {v}', { v: fL(b.port.K * Data.IN) })),
+      metric(t('Thread'), b.thread, t('tube OD {v} in', { v: b.tube })),
+    ];
+  }
+
+  function renderMetricList(box, items) {
     for (const m of items) {
       const d = document.createElement('div');
       d.className = 'metric' + (m.level ? ' ' + m.level : '');
@@ -550,25 +630,36 @@
 
   function renderRec(res) {
     const g = res.guide, s = state;
-    $('#rec-source').textContent = sourceName(g.source) + (g.exact ? '' : ' · ' + t('interpolated'));
     const box = $('#rec-table');
     box.textContent = '';
+    $('#rec-title').textContent = t(res.kind === 'boss' ? 'Port and fitting dimensions' : 'Recommended groove for this O-ring');
+    if (res.kind === 'boss') {
+      $('#rec-source').textContent = 'ERIKS · MS33656';
+      if (res.valid) renderBossDims(box, res.boss);
+      return;
+    }
+    $('#rec-source').textContent = sourceName(g.source) + (g.exact ? '' : ' · ' + t('interpolated'));
     if (!res.valid) return;
     const ok = (v, lo, hi) => (v >= lo - 1e-6 && v <= hi + 1e-6 ? '✓' : '!');
     const rows = [
       { cells: [t('Gland depth L'), range(g.L[0], g.L[1]), fL(res.L.nom), ok(res.L.nom, g.L[0], g.L[1])] },
-      { cells: [t('Groove width G') + (s.type === 'face' ? ` (${t(s.medium === 'gas' ? 'gas / vacuum' : 'liquids')})` : s.backups ? ` (${t('{n} back-up', { n: s.backups })})` : ''), range(g.G[0], g.G[1]), fL(s.G), ok(s.G, g.G[0], g.G[1])] },
+      { cells: [t(s.type === 'dovetail' ? 'Width at the opening' : 'Groove width G') + (s.type === 'face' ? ` (${t(s.medium === 'gas' ? 'gas / vacuum' : 'liquids')})` : s.backups ? ` (${t('{n} back-up', { n: s.backups })})` : ''), range(g.G[0], g.G[1]), fL(s.G), ok(s.G, g.G[0], g.G[1])] },
       { cells: [t('Groove bottom radius'), range(g.R[0], g.R[1]), fL(s.r), ok(s.r, g.R[0] * 0.999, g.R[1])] },
       { cells: [t('Compression'), `${U.fmtNumber(g.sq[0], 0)}–${U.fmtNumber(g.sq[1], 0)} %`, `${fPct(res.squeeze.min)} … ${fPct(res.squeeze.max)}`, ok(res.squeeze.nom * 100, g.sq[0], g.sq[1])] },
     ];
-    if (g.E !== undefined && s.type !== 'face') {
+    if (s.type === 'dovetail') {
+      rows.push({ cells: [t('Undercut angle'), g.angle + '°', U.fmtNumber(s.angle, 1) + '°', Math.abs(s.angle - g.angle) <= 1 ? '✓' : '!'] });
+      rows.push({ cells: [t('Radius at the opening edges'), fL(g.Rtop), '—', ''] });
+    }
+    if (g.E !== undefined && !Calc.isAxial(s)) {
       const Emax = res.Emax;
       rows.push({ cells: [t('Diametral clearance (max.)'), fL(Emax) + (res.mat.lowStrength ? ' *' : ''), fL(2 * res.gapRMax), 2 * res.gapRMax <= Emax + 1e-6 ? '✓' : '!'] });
     }
     // hardware implied by the guideline for the primary dimension
     if (s.type === 'piston' && s.shape === 'circle') rows.push({ cells: [t('Groove Ø (for this bore)'), range(s.A - 2 * g.L[1], s.A - 2 * g.L[0]), fL(s.B1), ok(s.B1, s.A - 2 * g.L[1], s.A - 2 * g.L[0])] });
     if (s.type === 'rod' && s.shape === 'circle') rows.push({ cells: [t('Groove Ø (for this rod)'), range(s.B + 2 * g.L[0], s.B + 2 * g.L[1]), fL(s.A1), ok(s.A1, s.B + 2 * g.L[0], s.B + 2 * g.L[1])] });
-    if (s.type === 'face') rows.push({ cells: [t('Groove depth (with flange gap {v})', { v: fL(s.gap || 0) }), range(g.L[0] - (s.gap || 0), g.L[1] - (s.gap || 0)), fL(s.h), ok(s.h + (s.gap || 0), g.L[0], g.L[1])] });
+    if (s.type === 'dovetail' && s.shape === 'circle') rows.push({ cells: [t('Groove mean Ø'), fL(s.ring.id + s.ring.cs), fL(s.Dm), Math.abs(s.Dm / (s.ring.id + s.ring.cs) - 1) <= Data.LIMITS.dovetailFitMax / 100 ? '✓' : '!'] });
+    if (Calc.isAxial(s)) rows.push({ cells: [t('Groove depth (with flange gap {v})', { v: fL(s.gap || 0) }), range(g.L[0] - (s.gap || 0), g.L[1] - (s.gap || 0)), fL(s.h), ok(s.h + (s.gap || 0), g.L[0], g.L[1])] });
     box.appendChild(table([t('Parameter'), t('Guideline'), t('Your design'), ''], rows));
     if (res.mat.lowStrength) {
       const p = document.createElement('p'); p.className = 'card-note'; p.style.marginTop = '8px';
@@ -577,8 +668,27 @@
     }
   }
 
+  /** Port (boss) and fitting-end dimensions of a -9xx size. */
+  function renderBossDims(box, b) {
+    const IN = Data.IN;
+    const v = (x) => fL(x * IN);
+    const rows = [
+      [t('Thread'), b.thread], [t('Tube OD'), b.tube + ' in'],
+      [t('Port: min. full-thread depth J'), v(b.port.J)], [t('Port: cone Ø U (+0.005 in)'), v(b.port.U)],
+      [t('Port: cone depth K (+0.015 in)'), v(b.port.K)], [t('Port: cone angle Z'), b.port.Z + '°'],
+      [t('Port: D (min.)'), v(b.port.D)], [t('Port: Y (min.)'), v(b.port.Y)], [t('Port: P (min.)'), v(b.port.P)], [t('Port: O (min.)'), v(b.port.O)],
+      [t('Fitting: undercut Ø F (+0.002 / −0.003 in)'), v(b.fit.F)], [t('Fitting: D (max.)'), v(b.fit.D)],
+      [t('Fitting: U (+0.010 in)'), v(b.fit.U)], [t('Fitting: K (+0.015 in)'), v(b.fit.K)],
+    ];
+    box.appendChild(table([t('Parameter'), t('Standard')], rows.map((c) => ({ cells: c }))));
+    const p = document.createElement('p'); p.className = 'card-note'; p.style.marginTop = '8px';
+    p.textContent = t('Letters as in the port and fitting-end drawings of the standard (ERIKS O-ring handbook, MS33656 fitting end). Check the current standard (SAE J1926 / AS5202) for your fitting.');
+    box.appendChild(p);
+  }
+
   function renderGuideLib(res) {
     const kind = res.kind;
+    if (kind === 'boss') return renderBossLib();
     const src = guideSrc || res.guide.source;
     const box = $('#guide-table');
     box.textContent = '';
@@ -591,11 +701,19 @@
     ss.addEventListener('change', () => { guideSrc = ss.value; render(); });
     sel.appendChild(ss);
     box.appendChild(sel);
-    const kindName = { staticRadial: 'Static radial (piston / rod)', face: 'Face seal (axial)', dynamic: 'Dynamic reciprocating (piston / rod)' }[kind];
+    const kindName = { staticRadial: 'Static radial (piston / rod)', face: 'Face seal (axial)', dynamic: 'Dynamic reciprocating (piston / rod)', dovetail: 'Dovetail groove' }[kind];
     $('#guide-note').textContent = t('{kind} · values in {unit}. The highlighted row matches the selected O-ring cross-section.', { kind: t(kindName), unit: U.label('length') });
     const cs = state.ring.cs;
     let head, rows;
-    if (src === 'parker') {
+    if (kind === 'dovetail') {
+      head = [t('Cross-section'), t('Gland depth L'), t('Width at the opening'), t('Undercut angle'), t('Bottom radius'), t('Radius at the opening edges')];
+      if (src === 'parker') {
+        const conv = (inch) => inch * Data.IN;
+        rows = Data.PARKER_IN.dovetail.map((r) => ({ hl: Math.abs(conv(r.cs) - cs) < 0.03, cells: [fL(conv(r.cs)), range(conv(r.L[0]), conv(r.L[1])), range(conv(r.G[0]), conv(r.G[1])), Data.PARKER_IN.dovetailAngle + '°', fL(conv(r.R1)), fL(conv(r.R[0]))] }));
+      } else {
+        rows = Data.ERIKS_MM.dovetail.map((r) => ({ hl: Math.abs(r[0] - cs) < 0.03, cells: [fL(r[0]), range(r[1] - 0.05, r[1] + 0.05), range(r[2] - 0.05, r[2] + 0.05), r[3] + '°', fL(r[4]), fL(r[5])] }));
+      }
+    } else if (src === 'parker') {
       const tab = Data.PARKER_IN[kind];
       const conv = (inch) => inch * Data.IN;
       if (kind === 'face') {
@@ -627,6 +745,19 @@
       box.appendChild(table([t('Cross-section'), t('Back-up thickness'), t('Gland depth L'), t('Width, 1 back-up'), t('Width, 2 back-ups')],
         b.map((r) => ({ hl: Math.abs(r[0] - cs) < 0.03, cells: [fL(r[0]), fL(r[1]), fL(r[2]), fL(r[3]), fL(r[4])] }))));
     }
+  }
+
+  function renderBossLib() {
+    const box = $('#guide-table');
+    box.textContent = '';
+    $('#guide-note').textContent = t('AS568 -9xx boss seals and port / fitting dimensions · values in {unit}. Click a row to use that size.', { unit: U.label('length') });
+    const v = (x) => fL(x * Data.IN);
+    const rows = Data.BOSS_IN.map((b) => ({
+      hl: state.size === '-' + b.dash,
+      cells: ['-' + b.dash, b.tube + ' in', b.thread, v(b.id), v(b.cs), v(b.fit.F), v(b.port.U), v(b.port.K), b.port.Z + '°'],
+      onclick: () => { selectSize('BOSS', '-' + b.dash); fillCsFilter(); fillSizes(); render(); },
+    }));
+    box.appendChild(table([t('Size'), t('Tube OD'), t('Thread'), 'ID', 'CS', 'F', 'U', 'K', 'Z'], rows, { left: [2] }));
   }
 
   function renderSizeLib() {
@@ -671,13 +802,16 @@
     const typeHints = {
       piston: 'Groove in the piston (inner part). The O-ring is stretched onto the groove bottom and seals against the bore.',
       rod: 'Groove in the housing bore. The O-ring seals against the rod or shaft.',
+      dovetail: 'Undercut groove in a flat face that holds the O-ring during assembly (doors, lids, vacuum chambers). The mean groove diameter should match the mean O-ring diameter.',
+      boss: 'AS568 -9xx O-ring of a straight-thread tube fitting. It is squeezed between the fitting undercut and the conical seat of the port, so the gland comes from the port standard.',
       face: s.pdir === 'external'
         ? 'Groove in a flat face, pressure from outside: the O-ring ID should seat on the groove inner wall.'
         : 'Groove in a flat face, pressure from inside: the O-ring OD should seat on the groove outer wall.',
     };
     let th = t(typeHints[s.type]);
-    if (s.type !== 'face' && s.shape === 'rect') th += ' ' + t('Rounded-rectangle radial gland: the contour is the bore (piston) or the rod / plug (rod); the groove is offset from it by the gland depth.');
+    if ((s.type === 'piston' || s.type === 'rod') && s.shape === 'rect') th += ' ' + t('Rounded-rectangle radial gland: the contour is the bore (piston) or the rod / plug (rod); the groove is offset from it by the gland depth.');
     if (s.type === 'face' && s.shape === 'rect') th += ' ' + t('Rounded rectangle: enter the outer groove wall; the inner wall is offset by the groove width.');
+    if (s.type === 'dovetail' && s.shape === 'rect') th += ' ' + t('Rounded rectangle: enter the groove centreline; the walls are offset by half the opening width.');
     $('#type-hint').textContent = th;
 
     const r = s.ring;
@@ -693,16 +827,55 @@
     let hw = '';
     if (s.type === 'piston' && s.shape === 'circle') hw = t('Gland depth L = (bore − groove Ø) / 2 = {L}. Radial clearance = (bore − piston Ø) / 2 = {c}.', { L: fL(res.L.nom), c: fL(res.gapR) });
     else if (s.type === 'rod' && s.shape === 'circle') hw = t('Gland depth L = (groove Ø − rod Ø) / 2 = {L}. Radial clearance = (housing bore − rod Ø) / 2 = {c}.', { L: fL(res.L.nom), c: fL(res.gapR) });
-    else if (s.type === 'face') hw = t('Gland depth L = groove depth + flange gap = {L}.', { L: fL(res.L.nom) });
+    else if (Calc.isAxial(s) && res.valid) hw = t('Gland depth L = groove depth + flange gap = {L}.', { L: fL(res.L.nom) });
     $('#hw-hint').textContent = hw;
+  }
+
+  // ---------- Application examples ----------
+  function fillPresets() {
+    const sel = $('#preset');
+    sel.textContent = '';
+    sel.appendChild(new Option(t('Load application example…'), ''));
+    const groups = {};
+    for (const p of PRESETS) {
+      if (!groups[p.group]) { groups[p.group] = document.createElement('optgroup'); groups[p.group].label = t(p.group); sel.appendChild(groups[p.group]); }
+      groups[p.group].appendChild(new Option(t(p.name), p.id));
+    }
+  }
+
+  function applyPreset(id) {
+    const p = PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    state = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), JSON.parse(JSON.stringify(p.state)), { ring: null });
+    selectSize(p.state.series, p.state.size, true);
+    ensureHardware(true);
+    $('#cs-filter').value = '';
+    fillCsFilter(); fillSizes();
+    render();
+    toast(t('Loaded example: {name}', { name: t(p.name) }));
   }
 
   // ---------- Toolbar, dialogs ----------
   function bindToolbar() {
+    fillPresets();
+    $('#preset').addEventListener('change', (e) => { applyPreset(e.target.value); e.target.value = ''; });
+
+    // tooltips: hover shows the title; click / tap (touch screens) shows it as a toast
+    document.addEventListener('click', (e) => {
+      const tip = e.target.closest('.tip');
+      if (tip) { e.preventDefault(); toast(tip.getAttribute('title')); }
+    });
+
+    const help = $('#help');
+    $('#help-open').addEventListener('click', () => { if (!help.open) help.showModal(); });
+    help.addEventListener('click', (e) => { if (e.target === help) help.close(); });
+    window.addEventListener('hashchange', () => { if (location.hash === '#help' && !help.open) help.showModal(); });
+    if (location.hash === '#help') help.showModal();
+
     const langSel = $('#lang');
     for (const [k, v] of Object.entries(I18N.LANGS)) langSel.appendChild(new Option(v.name, k));
     langSel.value = I18N.lang;
-    langSel.addEventListener('change', () => { I18N.setLang(langSel.value); fillMaterials(); fillCsFilter(); fillSizes(); render(); renderConverter(); });
+    langSel.addEventListener('change', () => { I18N.setLang(langSel.value); fillMaterials(); fillPresets(); fillCsFilter(); fillSizes(); render(); renderConverter(); });
 
     $('#units').addEventListener('click', (e) => {
       const b = e.target.closest('button[role="radio"]');
@@ -813,7 +986,7 @@
     box.textContent = msg;
     box.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { box.hidden = true; }, 2200);
+    toastTimer = setTimeout(() => { box.hidden = true; }, Math.max(2200, msg.length * 45));
   }
 
   function fillMaterials() {

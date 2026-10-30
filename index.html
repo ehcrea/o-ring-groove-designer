@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#f4f4f2" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
-  <link rel="stylesheet" href="css/style.css?v=13">
+  <link rel="stylesheet" href="css/style.css?v=19">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try { const t = localStorage.getItem('oring.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* storage unavailable */ }
@@ -28,10 +28,16 @@
       <img class="logo" src="icons/favicon.svg" alt="" width="30" height="30">
       <div>
         <h1>O-Ring Groove Designer</h1>
-        <p class="subtitle">Piston, rod &amp; face seals · AS568 &amp; ISO 3601 · v1</p>
+        <p class="subtitle">Piston, rod &amp; face seals · AS568 &amp; ISO 3601 · v1.1</p>
       </div>
     </div>
     <div class="toolbar">
+      <label class="preset">
+        <span class="sr-only">Application example</span>
+        <select id="preset" aria-label="Application example">
+          <option value="">Load application example…</option>
+        </select>
+      </label>
       <div class="seg" role="radiogroup" aria-label="Unit system" id="units">
         <button type="button" role="radio" data-units="SI" aria-checked="true">Metric</button>
         <button type="button" role="radio" data-units="IMP" aria-checked="false">Inch</button>
@@ -43,6 +49,7 @@
       <button type="button" class="btn" id="converter-open" title="Open the unit converter">Unit converter</button>
       <button type="button" class="btn" id="share" title="Copy a link containing this design">Copy link</button>
       <button type="button" class="btn" id="print" title="Print this page">Print</button>
+      <button type="button" class="btn" id="help-open" title="How to use this calculator">Help</button>
       <button type="button" class="btn" id="about-open" title="About this calculator">About</button>
       <button type="button" class="btn btn-icon" id="theme" title="Toggle light/dark theme" aria-label="Toggle theme">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"></path></svg>
@@ -55,18 +62,26 @@
     <form class="inputs" id="form" autocomplete="off" novalidate>
       <fieldset>
         <legend><span class="step">1</span>Application</legend>
-        <div class="layout-picker" role="radiogroup" aria-label="Seal type" id="type-picker">
+        <div class="layout-picker five" role="radiogroup" aria-label="Seal type" id="type-picker">
           <button type="button" role="radio" data-type="piston" aria-checked="true">
-            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 4H58M2 32H58"/><path d="M8 10H52V26H8Z"/><path class="ring-path" d="M26 10V14H34V10"/><circle class="ring" cx="30" cy="10" r="3.4"/></svg>
-            <span>Piston (radial)</span>
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 4H58M2 32H58"/><path d="M8 10H52V26H8Z"/><circle class="ring" cx="30" cy="10" r="3.4"/></svg>
+            <span>Piston</span>
           </button>
           <button type="button" role="radio" data-type="rod" aria-checked="false">
             <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 6H26V2M34 2V6H58M2 30H58"/><path d="M8 12H52V24H8Z"/><circle class="ring" cx="30" cy="9" r="3.4"/></svg>
-            <span>Rod (radial)</span>
+            <span>Rod</span>
           </button>
           <button type="button" role="radio" data-type="face" aria-checked="false">
             <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 8H58M2 28H24V18H36V28H58"/><circle class="ring" cx="30" cy="22" r="3.4"/></svg>
-            <span>Face (axial)</span>
+            <span>Face</span>
+          </button>
+          <button type="button" role="radio" data-type="dovetail" aria-checked="false">
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 8H58M2 28H25L22 16H38L35 28H58"/><circle class="ring" cx="30" cy="22" r="3.4"/></svg>
+            <span>Dovetail</span>
+          </button>
+          <button type="button" role="radio" data-type="boss" aria-checked="false">
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 10H20L26 18V34M58 10H40L34 18V34"/><path d="M28 2V34M32 2V34"/><circle class="ring" cx="24" cy="12" r="3"/><circle class="ring" cx="36" cy="12" r="3"/></svg>
+            <span>Boss port</span>
           </button>
         </div>
         <div class="grid2">
@@ -84,16 +99,16 @@
               <button type="button" role="radio" data-pdir="external" aria-checked="false">Outside</button>
             </div>
           </div>
-          <div>
+          <div data-show="radial face dovetail">
             <div class="mini-label">Groove outline</div>
             <div class="seg seg-wide" role="radiogroup" aria-label="Groove outline" id="shape">
               <button type="button" role="radio" data-shape="circle" aria-checked="true">Circle</button>
-              <button type="button" role="radio" data-shape="rect" aria-checked="false">Rounded rect.</button>
+              <button type="button" role="radio" data-shape="rect" aria-checked="false">Rectangle (R)</button>
             </div>
           </div>
         </div>
-        <div class="grid2">
-          <label>Design guideline
+        <div class="grid2" data-show="radial face dovetail">
+          <label><span class="lt">Design guideline <span class="tip" tabindex="0" title="Auto uses Parker's inch tables for AS568 cross-sections and ERIKS' metric tables for other cross-sections.">ⓘ</span></span>
             <select data-key="source">
               <option value="auto">Auto (Parker for AS568, ERIKS for metric)</option>
               <option value="parker">Parker (ORD 5700)</option>
@@ -106,7 +121,7 @@
               <option value="gas">Gas / vacuum</option>
             </select>
           </label>
-          <label data-show="radial">Back-up rings
+          <label data-show="radial"><span class="lt">Back-up rings <span class="tip" tabindex="0" title="Hard rings (PTFE or 90 Shore A) beside the O-ring that close the extrusion gap. Needed at high pressure; they make the groove wider.">ⓘ</span></span>
             <select data-key="backups" data-q="int">
               <option value="0">None</option>
               <option value="1">One</option>
@@ -124,6 +139,7 @@
             <select data-key="series" id="series">
               <option value="AS568">AS568 (inch)</option>
               <option value="ISO3601">ISO 3601-1 G (metric)</option>
+              <option value="BOSS">AS568 boss seals (-9xx)</option>
               <option value="custom">Custom size</option>
             </select>
           </label>
@@ -153,7 +169,7 @@
             </select>
           </label>
         </div>
-        <button type="button" class="btn" id="suggest" title="Pick the standard O-ring that best fits the main hardware dimension, then size the groove for it">Suggest O-ring for this hardware</button>
+        <button type="button" class="btn" id="suggest" data-show="radial face dovetail" title="Pick the standard O-ring that best fits the main hardware dimension, then size the groove for it">Suggest O-ring for this hardware</button>
         <p class="hint" id="ring-hint"></p>
       </fieldset>
 
@@ -180,7 +196,26 @@
             <label>Diametral clearance <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="E" data-q="length"></label>
           </div>
         </div>
-        <div data-show="face">
+        <div data-show="dovetail">
+          <div class="grid3" data-show="dovetail-circle">
+            <label>Groove mean Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Dm" data-q="length"></label>
+          </div>
+          <div class="grid3" data-show="dovetail-rect">
+            <label>Centreline length <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Lm" data-q="length"></label>
+            <label>Centreline width <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Wm" data-q="length"></label>
+            <label>Centreline corner radius <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Rm" data-q="length"></label>
+          </div>
+          <div class="grid2">
+            <label><span class="lt">Undercut angle <span class="tip" tabindex="0" title="Side wall angle measured from the vertical. Parker uses 24° (walls at 66° to the groove bottom); ERIKS lists 23–32° depending on the cross-section.">ⓘ</span></span> <span class="u">(°)</span><input type="number" step="any" min="0" max="45" data-key="angle" data-q="num"></label>
+          </div>
+        </div>
+        <div data-show="boss">
+          <div class="grid2">
+            <label>Fitting undercut Ø F <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="F" data-q="length"></label>
+          </div>
+          <p class="hint">The O-ring sits on the undercut of the fitting and is squeezed into the conical seat of the port. Select the size by tube OD in the O-ring section; the port and fitting dimensions are listed in the results.</p>
+        </div>
+        <div data-show="axial">
           <div class="grid3" data-show="face-circle">
             <label>Groove outer Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Do" data-q="length"></label>
           </div>
@@ -191,22 +226,22 @@
           </div>
           <div class="grid2">
             <label>Groove depth <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="h" data-q="length"></label>
-            <label>Flange gap <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="gap" data-q="length"></label>
+            <label><span class="lt">Flange gap <span class="tip" tabindex="0" title="Gap between the flange faces after assembly. Keep 0 (metal-to-metal contact) where possible; any gap adds to the gland depth and is an extrusion path.">ⓘ</span></span> <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="gap" data-q="length"></label>
           </div>
         </div>
-        <div class="grid2">
-          <label>Groove width <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="G" data-q="length"></label>
+        <div class="grid2" data-show="radial face dovetail">
+          <label><span id="g-label">Groove width</span> <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="G" data-q="length"></label>
           <label>Groove bottom radius <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="r" data-q="length"></label>
         </div>
         <button type="button" class="btn btn-primary" id="apply-rec" title="Set gland depth, groove width and clearance from the guideline for the selected O-ring">Apply recommended groove</button>
-        <details class="sub">
+        <details class="sub" data-show="radial face dovetail">
           <summary>Tolerances</summary>
           <div class="grid3">
             <label>Diameters ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolD" data-q="length"></label>
             <label>Depth ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolH" data-q="length"></label>
             <label>Width ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolG" data-q="length"></label>
           </div>
-          <label class="check" data-show="radial"><input type="checkbox" data-key="ecc"> Include full eccentricity (parts offset by the radial clearance)</label>
+          <label class="check" data-show="radial"><input type="checkbox" data-key="ecc"> Include full eccentricity (parts offset by the radial clearance) <span class="tip" tabindex="0" title="Without guide rings the inner part can shift to one side. Then the gland is deeper by the radial clearance on that side, which lowers the minimum compression.">ⓘ</span></label>
           <p class="hint">Each diameter of the gland is taken as nominal ± the diameter tolerance; the depth tolerance applies to the face groove depth and to rectangular radial glands.</p>
         </details>
         <p class="hint" id="hw-hint"></p>
@@ -216,7 +251,7 @@
         <legend><span class="step">4</span>Operating conditions</legend>
         <div class="grid2">
           <label>Pressure <span class="u" data-unit="pressure"></span><input type="number" step="any" min="0" data-key="pressure" data-q="pressure"></label>
-          <label>Volume swell <span class="u">%</span><input type="number" step="any" data-key="swell" data-q="num"></label>
+          <label><span class="lt">Volume swell <span class="tip" tabindex="0" title="Change in O-ring volume from the fluid, from the compound's fluid-resistance data (e.g. +5 % in mineral oil). Negative values are shrinkage.">ⓘ</span></span> <span class="u">%</span><input type="number" step="any" data-key="swell" data-q="num"></label>
           <label>Min. temperature <span class="u" data-unit="temp"></span><input type="number" step="any" data-key="tMin" data-q="temp"></label>
           <label>Max. temperature <span class="u" data-unit="temp"></span><input type="number" step="any" data-key="tMax" data-q="temp"></label>
         </div>
@@ -229,7 +264,7 @@
     <section class="results" aria-live="polite">
       <div class="card hero" id="hero">
         <div class="hero-main">
-          <div class="hero-label">Compression (nominal)</div>
+          <div class="hero-label" id="hero-label">Compression (nominal)</div>
           <div class="hero-value" id="hero-value">—</div>
           <div class="hero-sub" id="hero-sub"></div>
         </div>
@@ -244,7 +279,7 @@
           <div class="card-head"><h2>Gland cross-section</h2><span class="legend-key"><i class="k-free"></i>free O-ring</span></div>
           <div class="drawing" id="section"></div>
         </div>
-        <div class="card">
+        <div class="card" id="plan-card">
           <div class="card-head"><h2>Groove outline</h2></div>
           <div class="drawing" id="plan"></div>
         </div>
@@ -257,7 +292,7 @@
 
       <div class="card">
         <div class="card-head">
-          <h2>Recommended groove for this O-ring</h2>
+          <h2 id="rec-title">Recommended groove for this O-ring</h2>
           <span class="badge" id="rec-source"></span>
         </div>
         <div class="table-wrap" id="rec-table"></div>
@@ -307,6 +342,11 @@
     <div data-i18n-html="about"></div>
   </dialog>
 
+  <dialog class="about help" id="help" aria-labelledby="help-title">
+    <form method="dialog"><button class="btn btn-icon about-close" title="Close" aria-label="Close">✕</button></form>
+    <div data-i18n-html="help"></div>
+  </dialog>
+
   <dialog class="about converter" id="converter" aria-labelledby="conv-title">
     <form method="dialog"><button class="btn btn-icon about-close" title="Close" aria-label="Close">✕</button></form>
     <h2 id="conv-title">Unit converter</h2>
@@ -325,11 +365,12 @@
 
   <div class="toast" id="toast" role="status" hidden></div>
 
-  <script src="js/units.js?v=13"></script>
-  <script src="js/i18n.js?v=13"></script>
-  <script src="js/data.js?v=13"></script>
-  <script src="js/calc.js?v=13"></script>
-  <script src="js/drawing.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
+  <script src="js/units.js?v=19"></script>
+  <script src="js/i18n.js?v=19"></script>
+  <script src="js/data.js?v=19"></script>
+  <script src="js/calc.js?v=19"></script>
+  <script src="js/presets.js?v=19"></script>
+  <script src="js/drawing.js?v=19"></script>
+  <script src="js/app.js?v=19"></script>
 </body>
 </html>

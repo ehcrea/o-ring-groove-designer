@@ -14,6 +14,7 @@ function check(name, fn) {
   try { fn(); console.log('  ok   ' + name); }
   catch (e) { failed++; console.log('  FAIL ' + name + '\n       ' + e.message); }
 }
+const keys = new Set(I.keys());
 const near = (a, b, tol, what) => assert.ok(Math.abs(a - b) <= tol, `${what || ''} expected ${b} ± ${tol}, got ${a}`);
 const IN = 25.4;
 const size = (series, code) => D.SIZES.find((s) => s.series === series && s.code === code);
@@ -151,7 +152,7 @@ check('silicone halves the allowed clearance', () => {
   near(vmq.Emax, nbr.Emax / 2, 1e-12);
 });
 check('recommend() then calc() gives no errors for every AS568 and ISO size (static piston)', () => {
-  for (const z of D.SIZES) {
+  for (const z of D.SIZES.filter((x) => x.series !== 'BOSS')) {
     const s = design({ type: 'piston', ring: z, A: z.id + 2 * z.cs, tolD: 0.02, tolG: 0.05 });
     Object.assign(s, C.recommend(s));
     s.B1 = z.id * 1.02; s.A = s.B1 + 2 * C.guideline(z.cs, 'staticRadial', { csTol: z.csTol }).Lmid; s.C = s.A - 0.05;
@@ -171,6 +172,51 @@ check('suggest() picks an O-ring that seats well', () => {
   assert.ok(!('Do' in bf.patch), 'face suggestion keeps the groove OD');
 });
 
+console.log('Dovetail, boss seals & presets');
+check('dovetail: Parker .139 table, gland area includes the undercut', () => {
+  const g = C.guideline(0.139 * IN, 'dovetail', { source: 'parker' });
+  near(g.G[0], 0.113 * IN, 1e-6); assert.strictEqual(g.angle, 24);
+  const ring = { id: 100, idTol: 0, cs: 3.53, csTol: 0 };
+  const h = 2.84, G = 2.92, a = 24;
+  const r = C.calc(design({ type: 'dovetail', ring, Dm: 103.53, h, G, angle: a }));
+  near(r.fill.nom, Math.PI / 4 * 3.53 * 3.53 / (h * G + h * h * Math.tan(a * Math.PI / 180)), 1e-9);
+  near(r.stretch.nom, 0, 1e-9);
+  assert.ok(!r.issues.some((i) => /not retained/.test(i.text)));
+});
+check('dovetail: opening wider than the cross-section is flagged', () => {
+  const ring = { id: 100, idTol: 0, cs: 3.53, csTol: 0 };
+  const r = C.calc(design({ type: 'dovetail', ring, Dm: 103.53, h: 2.84, G: 3.6, angle: 24 }));
+  assert.ok(r.issues.some((i) => /not retained/.test(i.text)));
+});
+check('dovetail: ERIKS metric table 5.33 mm', () => {
+  const g = C.guideline(5.33, 'dovetail', { source: 'eriks' });
+  near(g.Lmid, 4.40, 1e-9); near(g.Gmid, 4.80, 1e-9); assert.strictEqual(g.angle, 24);
+});
+check('boss seal -906: 13 sizes, stretch on the MS33656 undercut', () => {
+  assert.strictEqual(D.SIZES.filter((z) => z.series === 'BOSS').length, 13);
+  const z = size('BOSS', '-906');
+  const s = design({ type: 'boss', ring: z, size: '-906', material: 'NBR', hardness: 90 });
+  Object.assign(s, C.recommend(s));
+  near(s.F, 0.481 * IN, 0.001);
+  const r = C.calc(s);
+  near(r.stretch.nom, 0.481 / 0.468 - 1, 2e-3);
+  assert.notStrictEqual(r.status, 'error');
+});
+check('every application example loads as a passing design', () => {
+  const P = require('../js/presets.js');
+  const DEF = { Lc: 80, Wc: 50, Rc: 15, Lo: 120, Wo: 80, Ro: 20, Lm: 150, Wm: 100, Rm: 25, angle: 24, tolD: 0.025, tolH: 0.03, tolG: 0.05, medium: 'liquid', pdir: 'internal', motion: 'static', source: 'auto' };
+  for (const p of P) {
+    const z = size(p.state.series, p.state.size);
+    assert.ok(z, p.id + ': size ' + p.state.size);
+    const s = Object.assign(design(DEF), p.state, { ring: z });
+    if (s.type === 'piston' && !s.A) throw new Error(p.id + ' needs a bore');
+    Object.assign(s, C.recommend(s));
+    const r = C.calc(s);
+    assert.strictEqual(r.status, 'ok', `${p.id}: ${r.issues.filter((i) => i.level !== 'info').map((i) => i.text).join(' | ')}`);
+    assert.ok(keys.has(p.name) && keys.has(p.group), p.id + ' translation');
+  }
+});
+
 console.log('Units');
 check('length, pressure and temperature conversions', () => {
   near(U.toDisplay('length', 25.4, 'IMP'), 1, 1e-12);
@@ -186,7 +232,6 @@ check('inch fractions', () => {
 });
 
 console.log('Translations');
-const keys = new Set(I.keys());
 check('every row has four non-empty texts and the same placeholders', () => {
   for (const r of I.rows()) {
     assert.strictEqual(r.length, 4, r[0]);
@@ -210,7 +255,7 @@ check('static page texts are translated', () => {
   const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '');
   const missing = [];
   const body = html.slice(html.indexOf('<body>'));
-  const ok = /^(?:[\s·©Ø±%✕—]*|[\d\s.,–-]+|ehcrea\.com|MIT License|© 2026 Eren Tozlu|SI|.*Shore A|Parker \(ORD 5700\)|\(%\))$/;
+  const ok = /^(?:[\s·©Ø±%✕—ⓘ]*|\(°\)|[\d\s.,–-]+|ehcrea\.com|MIT License|© 2026 Eren Tozlu|SI|.*Shore A|Parker \(ORD 5700\)|\(%\))$/;
   for (const m of body.matchAll(/>([^<>]+)</g)) {
     const txt = m[1].replace(/&amp;/g, '&').trim();
     if (txt && !ok.test(txt) && !keys.has(txt)) missing.push(txt);

@@ -5,7 +5,9 @@
  * Seal types:
  *   piston – radial seal, groove in the inner part (male gland)
  *   rod    – radial seal, groove in the housing bore (female gland)
- *   face   – axial (flange) seal, groove in a flat face
+ *   face     – axial (flange) seal, groove in a flat face
+ *   dovetail – axial seal in an undercut groove that retains the O-ring
+ *   boss     – AS568 -9xx O-ring of a straight-thread tube fitting (port standard)
  * Groove outline: circle, or rectangle with rounded corners.
  *
  * Worst-case tolerance stacking: minimum compression uses the smallest
@@ -53,7 +55,9 @@
     return a;
   }
 
-  const kindOf = (s) => (s.type === 'face' ? 'face' : s.motion === 'dynamic' ? 'dynamic' : 'staticRadial');
+  const kindOf = (s) => (s.type === 'face' || s.type === 'dovetail' || s.type === 'boss' ? s.type : s.motion === 'dynamic' ? 'dynamic' : 'staticRadial');
+  /** Axial seals: the gland depth is measured from the groove bottom to the mating face. */
+  const isAxial = (s) => s.type === 'face' || s.type === 'dovetail';
   const AS568_CS = [0.070, 0.103, 0.139, 0.210, 0.275];
   const isAs568Cs = (cs) => AS568_CS.some((c) => Math.abs(c * IN - cs) < 0.03);
 
@@ -103,6 +107,15 @@
       const pick = (f) => (exactRow ? f(exactRow) * IN : scaled(table, (r) => r.cs * IN, (r) => f(r) * IN, cs));
       const out = { source: 'parker', exact: !!exactRow };
       out.L = [pick((r) => r.L[0]), pick((r) => r.L[1])];
+      if (kind === 'dovetail') {
+        out.G = [pick((r) => r.G[0]), pick((r) => r.G[1])];
+        const R1 = pick((r) => r.R1);
+        out.R = [R1, R1];
+        out.Rtop = pick((r) => r.R[0]);
+        out.angle = D.PARKER_IN.dovetailAngle;
+        if (exactRow) out.sq = exactRow.sq.slice();
+        return finish(out, cs, opts);
+      }
       if (kind === 'face') {
         const key = medium === 'gas' ? 'Gv' : 'Gl';
         out.G = [pick((r) => r[key][0]), pick((r) => r[key][1])];
@@ -122,6 +135,14 @@
     const row = table.find((r) => near(r[0], cs, 0.03));
     const val = (k) => (row ? row[k] : scaled(table, (r) => r[0], (r) => r[k], cs));
     const out = { source: 'eriks', exact: !!row };
+    if (kind === 'dovetail') {
+      out.L = [val(1) - 0.05, val(1) + 0.05];
+      out.G = [val(2) - 0.05, val(2) + 0.05];
+      out.angle = row ? row[3] : 24;
+      out.R = [val(4), val(4)];
+      out.Rtop = val(5);
+      return finish(out, cs, opts);
+    }
     const L = val(2), Ltol = row ? row[3] : val(3);
     out.L = [L, L + Ltol];
     if (kind === 'face') {
@@ -215,6 +236,25 @@
         fit = (k) => rodFit(s.B + k * tD, (s.A1 + s.B) / 2 - k * tD, d1 - k * it, d2);
         g.length = PI * (s.B + g.L);
       }
+    } else if (s.type === 'dovetail') {
+      // mean groove diameter (at the opening centreline) should coincide with the mean O-ring diameter
+      g.L = s.h + (s.gap || 0); g.Ltol = tH;
+      g.gapR = s.gap || 0; g.gapRMax = g.gapR;
+      g.undercut = s.h * Math.tan((s.angle || 0) * PI / 180);
+      const P = (dl) => (s.shape === 'rect' ? rrPerimeter(s.Lm + dl, s.Wm + dl, s.Rm + dl / 2) : PI * (s.Dm + dl));
+      fit = (k) => {
+        const f = P(k * 2 * tD) / (PI * (d1 - k * it + d2)) - 1;
+        return f >= 0 ? { s: f, c: 0 } : { s: 0, c: 1 / (1 + f) - 1 };
+      };
+      g.length = P(0);
+      const G = s.G;
+      if (s.shape === 'rect') {
+        g.outer = { L: s.Lm + G, W: s.Wm + G, R: s.Rm + G / 2 };
+        g.inner = { L: s.Lm - G, W: s.Wm - G, R: Math.max(0, s.Rm - G / 2) };
+        g.centreRadius = s.Rm;
+      } else {
+        g.outerD = s.Dm + G; g.innerD = s.Dm - G;
+      }
     } else {
       // face seal: depth includes the flange gap
       g.L = s.h + (s.gap || 0); g.Ltol = tH;
@@ -255,6 +295,7 @@
   }
 
   function calc(s) {
+    if (s.type === 'boss') return calcBoss(s);
     const r = s.ring;
     const kind = kindOf(s);
     const mat = D.MATERIALS.find((m) => m.id === s.material) || D.MATERIALS[0];
@@ -272,7 +313,7 @@
 
     const csMin = r.cs - (r.csTol || 0), csMax = r.cs + (r.csTol || 0);
     const Lmin = g.L - g.Ltol;
-    const LmaxEcc = g.L + g.Ltol + (s.ecc && s.type !== 'face' ? g.gapRMax : 0);
+    const LmaxEcc = g.L + g.Ltol + (s.ecc && !isAxial(s) ? g.gapRMax : 0);
     const Gmin = s.G - (s.tolG || 0), Gmax = s.G + (s.tolG || 0);
 
     const { s: sN, c: cN } = g.fitNom;
@@ -297,7 +338,9 @@
     // gland fill: ring cross-section area over gland area (bottom corner radii removed)
     const R = s.r || 0;
     const corner = 2 * (1 - PI / 4) * R * R;
-    const gArea = (L, G) => Math.max(1e-9, L * G - corner);
+    // dovetail: the two undercut triangles add h² · tan(angle) to the opening-width rectangle
+    const dove = s.type === 'dovetail' ? s.h * s.h * Math.tan((s.angle || 0) * PI / 180) : 0;
+    const gArea = (L, G) => Math.max(1e-9, L * G + dove - corner);
     const fill = {
       nom: ringArea(r.cs, sN, cN) / gArea(g.L, s.G),
       min: ringArea(csMin, sH, cH) / gArea(g.L + g.Ltol, Gmax),
@@ -323,6 +366,7 @@
       ringOD: r.id + 2 * r.cs,
     };
     check(s, res, add);
+    guidelineChecks(s, res, add);
     res.status = issues.some((i) => i.level === 'error') ? 'error' : issues.some((i) => i.level === 'warn') ? 'warn' : 'ok';
     return res;
   }
@@ -363,11 +407,18 @@
     if (f.max < 1 && f.hot >= 1) add('error', 'At {t} with {sw} % volume swell the O-ring overfills the gland ({v} %).', { v: pct(f.hot, 0), t: fmtT(s.tMax), sw: s.swell || 0 });
     else if (f.max < 1 && 100 * f.hot > L.fill.worstMax && 100 * f.max <= L.fill.worstMax) add('warn', 'At {t} with {sw} % volume swell the gland fill reaches {v} %.', { v: pct(f.hot, 0), t: fmtT(s.tMax), sw: s.swell || 0 });
     if (100 * f.nom < L.fillMin) add('info', 'Gland fill {v} % is low (typical 60–85 %, optimum 75 %). The O-ring can move and roll in the groove; check if a narrower groove is possible.', { v: pct(f.nom, 0) });
-    if (s.G - (s.tolG || 0) < s.ring.cs + (s.ring.csTol || 0)) add('warn', 'Groove width is smaller than the O-ring cross-section: the ring is squeezed sideways during installation.');
+    if (s.type !== 'dovetail' && s.G - (s.tolG || 0) < s.ring.cs + (s.ring.csTol || 0)) add('warn', 'Groove width is smaller than the O-ring cross-section: the ring is squeezed sideways during installation.');
 
     // stretch / circumferential fit
     const st = res.stretch, ci = res.circ;
-    if (s.type === 'face') {
+    if (s.type === 'dovetail') {
+      const fit = Math.max(st.nom, ci.nom);
+      if (100 * fit > L.dovetailFitMax) add('warn', 'The O-ring mean diameter differs by {v} % from the groove mean diameter; in dovetail grooves they should coincide.', { v: pct(fit) });
+      if (s.G + (s.tolG || 0) >= s.ring.cs - (s.ring.csTol || 0)) add('warn', 'The groove opening is not narrower than the O-ring cross-section, so the ring is not retained.');
+      if (s.ring.cs < L.dovetailMinCs - 0.01) add('info', 'ERIKS recommends dovetail grooves only for cross-sections of 3.53 mm (.139 in) and larger.');
+      if (!(s.angle > 0)) add('warn', 'Enter the side wall (undercut) angle of the dovetail.');
+      add('info', 'Dovetail grooves are expensive to machine; the radius at the opening edges is critical (too small damages the O-ring, too large lets it extrude).');
+    } else if (s.type === 'face') {
       if (s.pdir === 'external') {
         if (res.loose > 0.005) add('warn', 'O-ring ID is {v} % larger than the groove inner wall. With external pressure the ID should seat on the inner wall (choose a smaller O-ring).', { v: pct(res.loose) });
         if (100 * st.max > L.stretchMax) add('error', 'Installed stretch up to {v} % exceeds 5 %: faster ageing and loss of cross-section.', { v: pct(st.max) });
@@ -388,40 +439,84 @@
 
     // corners of rounded-rectangle grooves
     if (s.shape === 'rect') {
-      const rc = s.type === 'face' ? res.geom.centreRadius : (s.type === 'piston' ? Math.max(0, s.Rc - s.depth / 2) : s.Rc + s.depth / 2);
+      const rc = isAxial(s) ? res.geom.centreRadius : (s.type === 'piston' ? Math.max(0, s.Rc - s.depth / 2) : s.Rc + s.depth / 2);
       const minR = L.cornerRadiusFactor * s.ring.cs;
       if (rc < minR) add('warn', 'Corner radius at the groove centreline is {v}; at least {min} (3 × cross-section) is recommended so the O-ring does not kink or lift in the corners.', { v: fmtL(rc), min: fmtL(minR) });
     }
 
     // extrusion gap and pressure
     const p = s.pressure || 0;
-    if (res.Emax !== undefined && s.type !== 'face') {
+    if (res.Emax !== undefined && !isAxial(s)) {
       const Ed = 2 * res.gapRMax;
       if (Ed > res.Emax * 1.0001) add('warn', 'Diametral clearance up to {v} exceeds the guideline maximum {max} for this cross-section{sil}. Extrusion risk.', { v: fmtL(Ed), max: fmtL(res.Emax), sil: mat.lowStrength ? ' (halved for silicone)' : '' });
       if (res.gapR < 0) add('error', 'The clearance is negative: the parts interfere.');
     }
     if (s.type === 'face' && s.gap > 0 && res.Emax !== undefined && s.gap > res.Emax / 2) add('warn', 'Flange gap {v} is large; keep metal-to-metal contact or a very small gap to avoid extrusion.', { v: fmtL(s.gap) });
     const limitBar = kind === 'dynamic' ? L.pressureNoBackup.dynamic : L.pressureNoBackup.static;
-    if (!s.backups && s.type !== 'face') {
+    if (!s.backups && !isAxial(s)) {
       if (p > limitBar) add('warn', 'Pressure {p} is above {lim} without back-up rings ({mode}). Use back-up rings or a 90 Shore A compound.', { p: fmtP(p), lim: fmtP(limitBar), mode: kind === 'dynamic' ? 'dynamic' : 'static' });
       else if (kind !== 'dynamic' && p > L.pressureNoBackup.staticEriks) add('info', 'Pressure above 70 bar (1000 psi): ERIKS recommends back-up rings for static seals at this level.');
     }
     if (s.hardness <= 70 && p > L.pressure70ShoreStatic && !s.backups) add('info', 'With a 70 Shore A compound above about 80 bar, 90 Shore A or back-up rings reduce the extrusion risk.');
-    if (s.type === 'face' && p > 400) add('warn', 'Very high pressure for a face seal: check flange deflection (gap opening) under pressure.');
+    if (isAxial(s) && p > 400) add('warn', 'Very high pressure for a face seal: check flange deflection (gap opening) under pressure.');
 
-    // material
+    materialChecks(s, mat, kind, add);
+  }
+
+  function materialChecks(s, mat, kind, add) {
     if (s.tMin < mat.tMin) add('warn', '{m} is typically rated down to {t}: minimum temperature {v} is below that.', { m: mat.name, t: fmtT(mat.tMin), v: fmtT(s.tMin) });
     if (s.tMax > mat.tMax) add('warn', '{m} is typically rated up to {t}: maximum temperature {v} is above that.', { m: mat.name, t: fmtT(mat.tMax), v: fmtT(s.tMax) });
     if (kind === 'dynamic' && mat.lowStrength) add('warn', 'Silicone and fluorosilicone have low tear strength and are not recommended for dynamic seals.');
     if (kind === 'dynamic' && s.swell > 20) add('warn', 'Volume swell above 20 % causes high friction in dynamic seals (ERIKS).');
     if (kind === 'dynamic' && s.swell < -4) add('warn', 'Shrinkage of more than 4 % can cause leakage in dynamic seals (ERIKS).');
     if (s.ring.cs < 1.5 && kind === 'dynamic') add('info', 'Small cross-sections are sensitive to tolerances and wear in dynamic service.');
+  }
 
+  function guidelineChecks(s, res, add) {
     // guideline comparison
     const gd = res.guide;
     if (res.L.nom < gd.L[0] - 1e-6 || res.L.nom > gd.L[1] + 1e-6) add('info', 'Gland depth {v} is outside the guideline {lo}–{hi} for this cross-section.', { v: fmtL(res.L.nom), lo: fmtL(gd.L[0]), hi: fmtL(gd.L[1]) });
+    if (s.type === 'dovetail' && gd.angle && Math.abs((s.angle || 0) - gd.angle) > 1) add('info', 'Side wall angle {v}° differs from the guideline {g}°.', { v: s.angle, g: gd.angle });
     if (s.G < gd.G[0] - 1e-6 || s.G > gd.G[1] + 1e-6) add('info', 'Groove width {v} is outside the guideline {lo}–{hi}.', { v: fmtL(s.G), lo: fmtL(gd.G[0]), hi: fmtL(gd.G[1]) });
     if (!gd.exact) add('info', 'No table row for this cross-section: guideline values are interpolated.');
+  }
+
+  /**
+   * Boss seal: the gland is defined by the port and fitting-end standards, so the
+   * check is the stretch on the fitting undercut and the material limits.
+   */
+  function calcBoss(s) {
+    const r = s.ring;
+    const mat = D.MATERIALS.find((m) => m.id === s.material) || D.MATERIALS[0];
+    const size = D.SIZES.find((z) => z.series === 'BOSS' && z.code === s.size);
+    const boss = size && size.boss;
+    const issues = [];
+    const add = (level, text, params) => issues.push({ level, text, params: params || {} });
+    if (!boss || !(s.F > 0)) {
+      add('error', 'Select an AS568 -9xx boss seal size.');
+      return { kind: 'boss', mat, issues, valid: false, status: 'error' };
+    }
+    const Ftol = [0.003 * IN, 0.002 * IN]; // undercut Ø +.002 / −.003 in
+    const stretch = {
+      nom: s.F / r.id - 1,
+      min: (s.F - Ftol[0]) / (r.id + r.idTol) - 1,
+      max: (s.F + Ftol[1]) / (r.id - r.idTol) - 1,
+    };
+    const res = {
+      kind: 'boss', mat, issues, valid: true, boss, stretch,
+      csE: { nom: r.cs * (1 - csReduction(Math.max(0, stretch.nom))) },
+      ringOD: r.id + 2 * r.cs, ringVolume: PI * PI / 4 * r.cs * r.cs * (r.id + r.cs),
+    };
+    const Fstd = boss.fit.F * IN;
+    if (Math.abs(s.F - Fstd) > 0.01) add('info', 'Fitting undercut Ø differs from the MS33656 value {v}.', { v: fmtL(Fstd) });
+    if (100 * stretch.nom > D.LIMITS.stretchMax) add('warn', 'Installed stretch up to {v} % exceeds 5 % (Parker): faster ageing, the cross-section flattens. Consider the next larger O-ring ID.', { v: pct(stretch.nom) });
+    if (stretch.min < 0) add('warn', 'The O-ring can sit loose on the fitting undercut (stretch {v} %).', { v: pct(stretch.min) });
+    if (mat.lowStrength) add('warn', 'Silicone and fluorosilicone are not recommended for boss seals: low strength and extrusion resistance.');
+    if (s.hardness < 90 && (s.pressure || 0) > 210) add('info', 'Boss seals in high-pressure hydraulics usually use 90 Shore A compounds.');
+    add('info', 'The gland is defined by the port (boss) and fitting-end standards: check the port dimensions below rather than a groove.');
+    materialChecks(s, mat, 'static', add);
+    res.status = issues.some((i) => i.level === 'error') ? 'error' : issues.some((i) => i.level === 'warn') ? 'warn' : 'ok';
+    return res;
   }
 
   // Formatting hooks: the app replaces these with unit-aware formatters.
@@ -434,12 +529,22 @@
   /** Hardware dimensions from the guideline, keeping the primary dimension (bore, rod, groove wall). */
   function recommend(s) {
     const kind = kindOf(s);
+    if (kind === 'boss') {
+      const z = D.SIZES.find((x) => x.series === 'BOSS' && x.code === s.size);
+      return z ? { F: round(z.boss.fit.F * IN) } : {};
+    }
     const g = guideline(s.ring.cs, kind, { source: s.source, backups: s.backups, medium: s.medium, csTol: s.ring.csTol });
     const out = { G: round(g.Gmid), r: round(g.Rmid) };
+    if (kind === 'dovetail') {
+      out.h = round(Math.max(0.01, g.Lmid - (s.gap || 0)));
+      out.angle = g.angle;
+      if (s.shape !== 'rect') out.Dm = round(s.ring.id + s.ring.cs); // mean groove Ø = mean O-ring Ø
+      return out;
+    }
     const E = g.E !== undefined ? g.E * 0.6 : 0;
     if (s.type === 'piston' && s.shape !== 'rect') { out.B1 = round(s.A - 2 * g.Lmid); out.C = round(s.A - E); }
     else if (s.type === 'rod' && s.shape !== 'rect') { out.A1 = round(s.B + 2 * g.Lmid); out.D = round(s.B + E); }
-    else if (s.type !== 'face') { out.depth = round(g.Lmid); out.E = round(E); }
+    else if (!isAxial(s)) { out.depth = round(g.Lmid); out.E = round(E); }
     else {
       out.h = round(Math.max(0.01, g.Lmid - (s.gap || 0)));
       if (s.shape !== 'rect') {
@@ -471,6 +576,7 @@
       if (preferCs && Math.abs(z.cs - preferCs) > 0.03) continue;
       const trial = Object.assign({}, s, { ring: z });
       const patch = recommend(trial);
+      if (s.type === 'dovetail') delete patch.Dm; // keep the groove, find the ring that matches it
       // face seals keep the primary groove wall: outer wall (internal pressure) or inner wall (external)
       if (s.type === 'face') {
         if (s.pdir === 'external' && s.shape !== 'rect') patch.Do = round(s.Do - 2 * s.G + 2 * patch.G);
@@ -487,13 +593,15 @@
       let target, seat;
       if (s.type === 'piston') { target = 0.01; seat = res.stretch.min; } // worst case must not sit loose
       else if (s.type === 'rod') { target = 0.015; seat = res.stretch.nom - res.circ.nom; }
+      else if (s.type === 'dovetail') { target = 0; seat = res.stretch.nom - res.circ.nom; }
       else if (s.pdir === 'external') { target = 0.01; seat = res.stretch.nom - res.loose; }
       else { target = 0.005; seat = res.circ.nom - res.stretch.nom; }
       const errs = res.issues.filter((i) => i.level === 'error').length;
       const warns = res.issues.filter((i) => i.level === 'warn').length;
       const ref = s.type === 'piston' ? (s.shape === 'rect' ? (s.Lc + s.Wc) / 2 : s.A)
         : s.type === 'rod' ? (s.shape === 'rect' ? (s.Lc + s.Wc) / 2 : s.B)
-          : (s.shape === 'rect' ? (s.Lo + s.Wo) / 2 : s.Do);
+          : s.type === 'dovetail' ? (s.shape === 'rect' ? (s.Lm + s.Wm) / 2 : s.Dm)
+            : (s.shape === 'rect' ? (s.Lo + s.Wo) / 2 : s.Do);
       const csPenalty = preferCs ? 0 : 0.01 * Math.abs(z.cs - preferredCs(ref)) / preferredCs(ref);
       // a loose ring (negative seat) is worse than the same amount of extra stretch
       const miss = (seat - target) * (seat < 0 ? 3 : 1);
@@ -504,7 +612,7 @@
   }
 
   const Calc = {
-    calc, guideline, recommend, suggest, csReduction, rrPerimeter, kindOf, isAs568Cs, csTolFor,
+    calc, guideline, recommend, suggest, csReduction, rrPerimeter, kindOf, isAxial, isAs568Cs, csTolFor,
     setFormatters(f) { if (f.length) fmtL = f.length; if (f.pressure) fmtP = f.pressure; if (f.temp) fmtT = f.temp; },
   };
 
