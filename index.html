@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>O-Ring Groove Designer</title>
+  <meta name="description" content="Design and check O-ring grooves (glands) for piston, rod and face seals: compression, gland fill, stretch and extrusion gap, with AS568 and ISO 3601 sizes and Parker / ERIKS public guidelines.">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="icons/favicon-16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="O-Ring">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#f4f4f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="css/style.css?v=13">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try { const t = localStorage.getItem('oring.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) { /* storage unavailable */ }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="icons/favicon.svg" alt="" width="30" height="30">
+      <div>
+        <h1>O-Ring Groove Designer</h1>
+        <p class="subtitle">Piston, rod &amp; face seals · AS568 &amp; ISO 3601 · v1</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="seg" role="radiogroup" aria-label="Unit system" id="units">
+        <button type="button" role="radio" data-units="SI" aria-checked="true">Metric</button>
+        <button type="button" role="radio" data-units="IMP" aria-checked="false">Inch</button>
+      </div>
+      <label class="lang">
+        <span class="sr-only">Language</span>
+        <select id="lang" aria-label="Language"></select>
+      </label>
+      <button type="button" class="btn" id="converter-open" title="Open the unit converter">Unit converter</button>
+      <button type="button" class="btn" id="share" title="Copy a link containing this design">Copy link</button>
+      <button type="button" class="btn" id="print" title="Print this page">Print</button>
+      <button type="button" class="btn" id="about-open" title="About this calculator">About</button>
+      <button type="button" class="btn btn-icon" id="theme" title="Toggle light/dark theme" aria-label="Toggle theme">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ================= INPUTS ================= -->
+    <form class="inputs" id="form" autocomplete="off" novalidate>
+      <fieldset>
+        <legend><span class="step">1</span>Application</legend>
+        <div class="layout-picker" role="radiogroup" aria-label="Seal type" id="type-picker">
+          <button type="button" role="radio" data-type="piston" aria-checked="true">
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 4H58M2 32H58"/><path d="M8 10H52V26H8Z"/><path class="ring-path" d="M26 10V14H34V10"/><circle class="ring" cx="30" cy="10" r="3.4"/></svg>
+            <span>Piston (radial)</span>
+          </button>
+          <button type="button" role="radio" data-type="rod" aria-checked="false">
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 6H26V2M34 2V6H58M2 30H58"/><path d="M8 12H52V24H8Z"/><circle class="ring" cx="30" cy="9" r="3.4"/></svg>
+            <span>Rod (radial)</span>
+          </button>
+          <button type="button" role="radio" data-type="face" aria-checked="false">
+            <svg viewBox="0 0 60 36" aria-hidden="true"><path class="metal" d="M2 8H58M2 28H24V18H36V28H58"/><circle class="ring" cx="30" cy="22" r="3.4"/></svg>
+            <span>Face (axial)</span>
+          </button>
+        </div>
+        <div class="grid2">
+          <div data-show="radial">
+            <div class="mini-label">Motion</div>
+            <div class="seg seg-wide" role="radiogroup" aria-label="Motion" id="motion">
+              <button type="button" role="radio" data-motion="static" aria-checked="true">Static</button>
+              <button type="button" role="radio" data-motion="dynamic" aria-checked="false">Dynamic</button>
+            </div>
+          </div>
+          <div data-show="face">
+            <div class="mini-label">Pressure from</div>
+            <div class="seg seg-wide" role="radiogroup" aria-label="Pressure direction" id="pdir">
+              <button type="button" role="radio" data-pdir="internal" aria-checked="true">Inside</button>
+              <button type="button" role="radio" data-pdir="external" aria-checked="false">Outside</button>
+            </div>
+          </div>
+          <div>
+            <div class="mini-label">Groove outline</div>
+            <div class="seg seg-wide" role="radiogroup" aria-label="Groove outline" id="shape">
+              <button type="button" role="radio" data-shape="circle" aria-checked="true">Circle</button>
+              <button type="button" role="radio" data-shape="rect" aria-checked="false">Rounded rect.</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid2">
+          <label>Design guideline
+            <select data-key="source">
+              <option value="auto">Auto (Parker for AS568, ERIKS for metric)</option>
+              <option value="parker">Parker (ORD 5700)</option>
+              <option value="eriks">ERIKS (technical handbook)</option>
+            </select>
+          </label>
+          <label data-show="face">Medium
+            <select data-key="medium">
+              <option value="liquid">Liquid</option>
+              <option value="gas">Gas / vacuum</option>
+            </select>
+          </label>
+          <label data-show="radial">Back-up rings
+            <select data-key="backups" data-q="int">
+              <option value="0">None</option>
+              <option value="1">One</option>
+              <option value="2">Two</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint" id="type-hint"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">2</span>O-ring</legend>
+        <div class="grid2">
+          <label>Size standard
+            <select data-key="series" id="series">
+              <option value="AS568">AS568 (inch)</option>
+              <option value="ISO3601">ISO 3601-1 G (metric)</option>
+              <option value="custom">Custom size</option>
+            </select>
+          </label>
+          <label data-show="standard">Cross-section filter
+            <select id="cs-filter"></select>
+          </label>
+        </div>
+        <label data-show="standard">Size
+          <select id="size"></select>
+        </label>
+        <div class="grid2">
+          <label>Inner diameter ID <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-ring="id" data-q="length"></label>
+          <label>ID tolerance ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-ring="idTol" data-q="length"></label>
+          <label>Cross-section CS <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-ring="cs" data-q="length"></label>
+          <label>CS tolerance ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-ring="csTol" data-q="length"></label>
+        </div>
+        <div class="grid2">
+          <label>Material
+            <select data-key="material" id="material"></select>
+          </label>
+          <label>Hardness
+            <select data-key="hardness" data-q="int">
+              <option value="70">70 Shore A</option>
+              <option value="75">75 Shore A</option>
+              <option value="80">80 Shore A</option>
+              <option value="90">90 Shore A</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" class="btn" id="suggest" title="Pick the standard O-ring that best fits the main hardware dimension, then size the groove for it">Suggest O-ring for this hardware</button>
+        <p class="hint" id="ring-hint"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">3</span>Hardware &amp; groove</legend>
+        <div class="grid3" data-show="piston-circle">
+          <label>Bore Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="A" data-q="length"></label>
+          <label>Groove Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="B1" data-q="length"></label>
+          <label>Piston Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="C" data-q="length"></label>
+        </div>
+        <div class="grid3" data-show="rod-circle">
+          <label>Rod Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="B" data-q="length"></label>
+          <label>Groove Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="A1" data-q="length"></label>
+          <label>Housing bore Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="D" data-q="length"></label>
+        </div>
+        <div data-show="radial-rect">
+          <div class="grid3">
+            <label><span id="contour-label">Bore length</span> <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Lc" data-q="length"></label>
+            <label><span id="contour-label-w">Bore width</span> <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Wc" data-q="length"></label>
+            <label>Corner radius <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Rc" data-q="length"></label>
+          </div>
+          <div class="grid2">
+            <label>Gland depth <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="depth" data-q="length"></label>
+            <label>Diametral clearance <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="E" data-q="length"></label>
+          </div>
+        </div>
+        <div data-show="face">
+          <div class="grid3" data-show="face-circle">
+            <label>Groove outer Ø <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Do" data-q="length"></label>
+          </div>
+          <div class="grid3" data-show="face-rect">
+            <label>Outer length <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Lo" data-q="length"></label>
+            <label>Outer width <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Wo" data-q="length"></label>
+            <label>Outer corner radius <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="Ro" data-q="length"></label>
+          </div>
+          <div class="grid2">
+            <label>Groove depth <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="h" data-q="length"></label>
+            <label>Flange gap <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="gap" data-q="length"></label>
+          </div>
+        </div>
+        <div class="grid2">
+          <label>Groove width <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="G" data-q="length"></label>
+          <label>Groove bottom radius <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="r" data-q="length"></label>
+        </div>
+        <button type="button" class="btn btn-primary" id="apply-rec" title="Set gland depth, groove width and clearance from the guideline for the selected O-ring">Apply recommended groove</button>
+        <details class="sub">
+          <summary>Tolerances</summary>
+          <div class="grid3">
+            <label>Diameters ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolD" data-q="length"></label>
+            <label>Depth ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolH" data-q="length"></label>
+            <label>Width ± <span class="u" data-unit="length"></span><input type="number" step="any" min="0" data-key="tolG" data-q="length"></label>
+          </div>
+          <label class="check" data-show="radial"><input type="checkbox" data-key="ecc"> Include full eccentricity (parts offset by the radial clearance)</label>
+          <p class="hint">Each diameter of the gland is taken as nominal ± the diameter tolerance; the depth tolerance applies to the face groove depth and to rectangular radial glands.</p>
+        </details>
+        <p class="hint" id="hw-hint"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="step">4</span>Operating conditions</legend>
+        <div class="grid2">
+          <label>Pressure <span class="u" data-unit="pressure"></span><input type="number" step="any" min="0" data-key="pressure" data-q="pressure"></label>
+          <label>Volume swell <span class="u">%</span><input type="number" step="any" data-key="swell" data-q="num"></label>
+          <label>Min. temperature <span class="u" data-unit="temp"></span><input type="number" step="any" data-key="tMin" data-q="temp"></label>
+          <label>Max. temperature <span class="u" data-unit="temp"></span><input type="number" step="any" data-key="tMax" data-q="temp"></label>
+        </div>
+        <p class="hint">Volume swell from the fluid (from the compound's fluid-resistance data). Thermal expansion of the O-ring is added at the maximum temperature.</p>
+        <p class="hint" id="mat-hint"></p>
+      </fieldset>
+    </form>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="results" aria-live="polite">
+      <div class="card hero" id="hero">
+        <div class="hero-main">
+          <div class="hero-label">Compression (nominal)</div>
+          <div class="hero-value" id="hero-value">—</div>
+          <div class="hero-sub" id="hero-sub"></div>
+        </div>
+        <dl class="hero-side" id="hero-side"></dl>
+        <div class="status-chip" id="status-chip"></div>
+      </div>
+
+      <div class="card issues" id="issues" hidden></div>
+
+      <div class="grid-cards">
+        <div class="card">
+          <div class="card-head"><h2>Gland cross-section</h2><span class="legend-key"><i class="k-free"></i>free O-ring</span></div>
+          <div class="drawing" id="section"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Groove outline</h2></div>
+          <div class="drawing" id="plan"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Results</h2>
+        <div class="metrics" id="metrics"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Recommended groove for this O-ring</h2>
+          <span class="badge" id="rec-source"></span>
+        </div>
+        <div class="table-wrap" id="rec-table"></div>
+      </div>
+
+      <details class="card lib" id="lib-guide">
+        <summary>Groove guideline library</summary>
+        <p class="card-note" id="guide-note"></p>
+        <div class="table-wrap" id="guide-table"></div>
+      </details>
+
+      <details class="card lib" id="lib-sizes">
+        <summary>O-ring size library</summary>
+        <div class="lib-tools">
+          <select id="lib-series" aria-label="Size standard">
+            <option value="AS568">AS568 (inch)</option>
+            <option value="ISO3601">ISO 3601-1 G (metric)</option>
+          </select>
+          <input type="search" id="lib-search" placeholder="Search ID, CS or dash no." aria-label="Search sizes">
+        </div>
+        <p class="card-note">Click a row to use that O-ring.</p>
+        <div class="table-wrap lib-scroll" id="size-table"></div>
+      </details>
+
+      <details class="card lib" id="lib-mat">
+        <summary>Material library</summary>
+        <p class="card-note">Typical values for general-purpose compounds. Always check the data sheet of the actual compound and its fluid compatibility.</p>
+        <div class="table-wrap" id="mat-table"></div>
+      </details>
+
+      <details class="card notes">
+        <summary>Method, assumptions &amp; sources</summary>
+        <div class="notes-body" data-i18n-html="notes"></div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© 2026 Eren Tozlu</span>
+    <a href="https://ehcrea.com" target="_blank" rel="noopener">ehcrea.com</a>
+    <a href="https://github.com/ehcrea/o-ring-groove-designer/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+    <a href="#about" id="about-link">About</a>
+  </footer>
+
+  <dialog class="about" id="about" aria-labelledby="about-title">
+    <form method="dialog"><button class="btn btn-icon about-close" title="Close" aria-label="Close">✕</button></form>
+    <div data-i18n-html="about"></div>
+  </dialog>
+
+  <dialog class="about converter" id="converter" aria-labelledby="conv-title">
+    <form method="dialog"><button class="btn btn-icon about-close" title="Close" aria-label="Close">✕</button></form>
+    <h2 id="conv-title">Unit converter</h2>
+    <div class="seg seg-wide conv-tabs" role="radiogroup" aria-label="Quantity" id="conv-family">
+      <button type="button" role="radio" data-family="length" aria-checked="true">Length</button>
+      <button type="button" role="radio" data-family="pressure" aria-checked="false">Pressure</button>
+      <button type="button" role="radio" data-family="temp" aria-checked="false">Temperature</button>
+      <button type="button" role="radio" data-family="force" aria-checked="false">Force</button>
+      <button type="button" role="radio" data-family="area" aria-checked="false">Area</button>
+      <button type="button" role="radio" data-family="volume" aria-checked="false">Volume</button>
+    </div>
+    <p class="hint">Type in any field; the others update.</p>
+    <div class="conv-grid" id="conv-fields"></div>
+    <p class="hint" id="conv-frac"></p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="js/units.js?v=13"></script>
+  <script src="js/i18n.js?v=13"></script>
+  <script src="js/data.js?v=13"></script>
+  <script src="js/calc.js?v=13"></script>
+  <script src="js/drawing.js?v=13"></script>
+  <script src="js/app.js?v=13"></script>
+</body>
+</html>
