@@ -15,7 +15,7 @@ Seal types: **piston** (radial, male gland), **rod** (radial, female gland), sta
 
 **13 application examples** (hydraulic cylinder piston and rod, high-pressure valve plug, straight-thread port, round and rectangular covers, bearing cap, vacuum flange, steam, fuel system, dovetail door and valve seat) load complete designs that pass the checks, and a **Help** page explains the steps, the gland terms and how to read the results. ⓘ tooltips explain the less obvious inputs.
 
-Available in **English, German, Dutch and Turkish**, in **metric or inch** units, with light and dark themes. It includes a **unit converter** (length with inch fractions, pressure, temperature, force, area and volume), can be installed to a phone's home screen, and every design can be shared as a link.
+Available in **English, German, Dutch, Turkish and Spanish**, in **metric or inch** units, with light and dark themes. It includes a **unit converter** (length with inch fractions, pressure, temperature, force, area and volume), can be installed to a phone's home screen, and every design can be shared as a link.
 
 > The results are design guidance based on the manufacturers' public guidelines. Confirm critical seals with the seal supplier and by testing.
 
@@ -47,7 +47,7 @@ Then go to http://localhost:8766. It can also be hosted on GitHub Pages as is.
 node tests/calc.test.js
 ```
 
-The tests check the size and guideline tables against the handbook values, the compression, fill and stretch calculations, the rounded-rectangle and dovetail geometry, boss seal stretch, that every application example passes, that the recommended groove gives no errors for every standard size, the unit conversions, and that every text in the interface has all four translations.
+The tests check the size and guideline tables against the handbook values, the compression, fill and stretch calculations, the rounded-rectangle and dovetail geometry, boss seal stretch, that every application example passes, that the recommended groove gives no errors for every standard size, the unit conversions, and that every text in the interface has all five translations.
 
 ## Project layout
 
@@ -57,7 +57,7 @@ The tests check the size and guideline tables against the handbook values, the c
 | `js/presets.js` | Application examples |
 | `js/calc.js` | Gland calculation, design checks, recommended groove and O-ring suggestion |
 | `js/units.js` | Metric / inch display units and the unit converter |
-| `js/i18n.js` | Translations (EN, DE, NL, TR) |
+| `js/i18n.js` | Translations (EN, DE, NL, TR, ES) |
 | `js/drawing.js` | Cross-section and groove outline drawings (SVG) |
 | `js/app.js` | User interface |
 

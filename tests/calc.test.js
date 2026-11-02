@@ -232,9 +232,9 @@ check('inch fractions', () => {
 });
 
 console.log('Translations');
-check('every row has four non-empty texts and the same placeholders', () => {
+check('every row has five non-empty texts and the same placeholders', () => {
   for (const r of I.rows()) {
-    assert.strictEqual(r.length, 4, r[0]);
+    assert.strictEqual(r.length, 5, r[0]);
     const ph = (s) => (s.match(/\{\w+\}/g) || []).sort().join();
     for (const x of r) assert.ok(x && ph(x) === ph(r[0]), 'placeholders differ: ' + r[0]);
   }
@@ -264,7 +264,7 @@ check('static page texts are translated', () => {
   assert.deepStrictEqual([...new Set(missing)], []);
 });
 check('about and notes exist in all languages', () => {
-  for (const b of Object.values(I.html())) for (const l of ['en', 'de', 'nl', 'tr']) assert.ok(b[l] && b[l].length > 200, l);
+  for (const b of Object.values(I.html())) for (const l of ['en', 'de', 'nl', 'tr', 'es']) assert.ok(b[l] && b[l].length > 200, l);
 });
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nAll checks passed');
