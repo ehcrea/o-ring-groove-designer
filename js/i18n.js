@@ -727,6 +727,24 @@
     },
   };
 
+  // Page title and description per language (search results, link previews).
+  const META = {
+    title: {
+      en: "O-Ring Groove Designer: groove dimensions, squeeze and gland fill calculator",
+      de: "O-Ring-Nutauslegung: Nutmaße, Verpressung und Nutfüllung berechnen",
+      nl: "O-ring-groefontwerp: groefmaten, samendrukking en groefvulling berekenen",
+      tr: "O-Ring Kanal Tasarımı: kanal ölçüleri, sıkıştırma ve kanal doluluğu hesabı",
+      es: "Diseño de ranuras para juntas tóricas: dimensiones, compresión y llenado de la ranura",
+    },
+    description: {
+      en: "Free online O-ring groove calculator for piston, rod, face, dovetail and boss seals: squeeze, gland fill, stretch, extrusion gap and material limits, with AS568 and ISO 3601 sizes and Parker / ERIKS guidelines. Metric or inch.",
+      de: "Kostenloser Online-Rechner für O-Ring-Nuten an Kolben-, Stangen-, Axial-, Schwalbenschwanz- und Einschraubdichtungen: Verpressung, Nutfüllung, Dehnung, Extrusionsspalt und Werkstoffgrenzen, mit AS568- und ISO-3601-Größen und Parker- / ERIKS-Richtlinien. Metrisch oder Zoll.",
+      nl: "Gratis online calculator voor O-ringgroeven bij zuiger-, stang-, vlak-, zwaluwstaart- en boss-afdichtingen: samendrukking, groefvulling, rek, extrusiespleet en materiaalgrenzen, met AS568- en ISO 3601-maten en Parker- / ERIKS-richtlijnen. Metrisch of inch.",
+      tr: "Piston, mil, yüzey, kırlangıç kuyruğu ve boss sızdırmazlıkları için ücretsiz çevrim içi O-ring kanal hesaplayıcısı: sıkıştırma, kanal doluluğu, gerdirme, ekstrüzyon boşluğu ve malzeme sınırları; AS568 ve ISO 3601 ölçüleri, Parker / ERIKS kılavuzları. Metrik veya inç.",
+      es: "Calculadora gratuita en línea de ranuras para juntas tóricas en pistón, vástago, cara, cola de milano y boss: compresión, llenado de la ranura, estiramiento, holgura de extrusión y límites del material, con tamaños AS568 e ISO 3601 y guías de Parker / ERIKS. Métrico o pulgadas.",
+    },
+  };
+
   const DICT = { de: {}, nl: {}, tr: {}, es: {} };
   for (const [en, de, nl, tr, es] of ROWS) { DICT.de[en] = de; DICT.nl[en] = nl; DICT.tr[en] = tr; DICT.es[en] = es; }
 
@@ -769,10 +787,15 @@
     for (const a of staticNodes.attrs) a.el.setAttribute(a.attr, t(a.en));
     for (const el of document.querySelectorAll('[data-i18n-html]')) {
       const block = HTML[el.dataset.i18nHtml];
-      if (block) el.innerHTML = block[lang] || block.en; // trusted static content defined above
+      if (!block) continue;
+      let html = block[lang] || block.en; // trusted static content defined above
+      // Language pages live one folder down: point relative image paths up a level.
+      const page = document.documentElement.dataset.page;
+      if (page && page !== 'en') html = html.replace(/(src|href)="icons\//g, '$1="../icons/');
+      el.innerHTML = html;
     }
     document.documentElement.lang = lang;
-    document.title = t('O-Ring Groove Designer');
+    document.title = META.title[lang];
   }
 
   const I18N = {
@@ -786,8 +809,18 @@
       let saved = null;
       try { saved = localStorage.getItem(STORE_KEY); } catch (e) { /* storage unavailable */ }
       const nav = (typeof navigator !== 'undefined' && navigator.language || 'en').slice(0, 2).toLowerCase();
-      lang = LANGS[saved] ? saved : LANGS[nav] ? nav : 'en';
+      // A language page (/de/, /nl/, …) always shows its own language.
+      const page = typeof document !== 'undefined' && document.documentElement.dataset.page;
+      lang = LANGS[page] ? page : LANGS[saved] ? saved : LANGS[nav] ? nav : 'en';
       applyStatic();
+    },
+    /** On a language page, go to the page of language l (keeping the #hash); false elsewhere. */
+    goToLang(l) {
+      const page = typeof document !== 'undefined' && document.documentElement.dataset.page;
+      if (!page || !LANGS[l]) return false;
+      try { localStorage.setItem(STORE_KEY, l); } catch (e) { /* storage unavailable */ }
+      location.href = (page === 'en' ? '' : '../') + (l === 'en' ? '' : l + '/') + location.hash;
+      return true;
     },
     setLang(l) {
       if (!LANGS[l]) return;
@@ -799,6 +832,8 @@
     keys: () => ROWS.map((r) => r[0]),
     rows: () => ROWS,
     html: () => HTML,
+    meta: () => META,
+    dict: () => DICT,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = I18N;

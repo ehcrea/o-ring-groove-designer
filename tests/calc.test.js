@@ -252,7 +252,8 @@ check('every t() / add() text in the code has a translation', () => {
   assert.deepStrictEqual(missing, []);
 });
 check('static page texts are translated', () => {
-  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '');
+  const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<svg[\s\S]*?<\/svg>/g, '')
+    .replace(/<!--i18n:(\w+)-->[\s\S]*?<!--\/i18n:\1-->/g, ''); // generated from I.html(), checked below
   const missing = [];
   const body = html.slice(html.indexOf('<body>'));
   const ok = /^(?:[\s·©Ø±%✕—ⓘ]*|\(°\)|[\d\s.,–-]+|ehcrea\.com|MIT License|© 2026 Eren Tozlu|SI|.*Shore A|Parker \(ORD 5700\)|\(%\))$/;

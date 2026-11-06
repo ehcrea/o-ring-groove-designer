@@ -875,7 +875,7 @@
     const langSel = $('#lang');
     for (const [k, v] of Object.entries(I18N.LANGS)) langSel.appendChild(new Option(v.name, k));
     langSel.value = I18N.lang;
-    langSel.addEventListener('change', () => { I18N.setLang(langSel.value); fillMaterials(); fillPresets(); fillCsFilter(); fillSizes(); render(); renderConverter(); });
+    langSel.addEventListener('change', () => { if (I18N.goToLang(langSel.value)) return; I18N.setLang(langSel.value); fillMaterials(); fillPresets(); fillCsFilter(); fillSizes(); render(); renderConverter(); });
 
     $('#units').addEventListener('click', (e) => {
       const b = e.target.closest('button[role="radio"]');

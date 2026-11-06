@@ -61,6 +61,17 @@ The tests check the size and guideline tables against the handbook values, the c
 | `js/drawing.js` | Cross-section and groove outline drawings (SVG) |
 | `js/app.js` | User interface |
 
+
+### Language pages and SEO
+
+Each language has its own page (`/`, `/de/`, `/nl/`, `/tr/`, `/es/`) so search engines can index the translations. `index.html` is the template. After changing it or the translations, regenerate the language pages, the SEO tags (title, description, canonical, hreflang, Open Graph, JSON-LD) and `sitemap.xml`:
+
+```bash
+node tools/build-pages.js
+```
+
+The page titles, descriptions and other settings are in `tools/seo.config.js`.
+
 ## License
 
 [MIT](LICENSE) © 2026 Eren Tozlu · [ehcrea.com](https://ehcrea.com)
