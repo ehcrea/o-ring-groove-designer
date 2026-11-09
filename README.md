@@ -74,4 +74,4 @@ The page titles, descriptions and other settings are in `tools/seo.config.js`.
 
 ## License
 
-[MIT](LICENSE) © 2026 Eren Tozlu · [ehcrea.com](https://ehcrea.com)
+[MIT](LICENSE) © 2026 E. Tozlu · [ehcrea.com](https://ehcrea.com)

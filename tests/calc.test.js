@@ -256,7 +256,7 @@ check('static page texts are translated', () => {
     .replace(/<!--i18n:(\w+)-->[\s\S]*?<!--\/i18n:\1-->/g, ''); // generated from I.html(), checked below
   const missing = [];
   const body = html.slice(html.indexOf('<body>'));
-  const ok = /^(?:[\s·©Ø±%✕—ⓘ]*|\(°\)|[\d\s.,–-]+|ehcrea\.com|MIT License|© 2026 Eren Tozlu|SI|.*Shore A|Parker \(ORD 5700\)|\(%\))$/;
+  const ok = /^(?:[\s·©Ø±%✕—ⓘ]*|\(°\)|[\d\s.,–-]+|ehcrea\.com|MIT License|© 2026 E. Tozlu|SI|.*Shore A|Parker \(ORD 5700\)|\(%\))$/;
   for (const m of body.matchAll(/>([^<>]+)</g)) {
     const txt = m[1].replace(/&amp;/g, '&').trim();
     if (txt && !ok.test(txt) && !keys.has(txt)) missing.push(txt);
