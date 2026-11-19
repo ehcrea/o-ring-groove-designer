@@ -918,7 +918,7 @@
       const current = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       const next = current === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', next);
-      try { localStorage.setItem('oring.theme', next); } catch (e) { /* storage unavailable */ }
+      try { localStorage.setItem('ehcrea.theme', next); } catch (e) { /* storage unavailable */ }
     });
 
     for (const id of ['#lib-sizes', '#lib-mat']) $(id).addEventListener('toggle', () => render());
