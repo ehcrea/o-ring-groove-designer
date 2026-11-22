@@ -10,7 +10,7 @@
  *   the cache.
  */
 'use strict';
-const CACHE = "o-ring-groove-designer-72029eec2b0b";
+const CACHE = "o-ring-groove-designer-3f52de124b01";
 const PREFIX = "o-ring-groove-designer-";
 const FILES = [
   "css/style.css",
