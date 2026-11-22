@@ -10,20 +10,21 @@
  *   the cache.
  */
 'use strict';
-const CACHE = "o-ring-groove-designer-bc952bd4c349";
+const CACHE = "o-ring-groove-designer-37ac743386df";
 const PREFIX = "o-ring-groove-designer-";
 const FILES = [
   "css/style.css",
   "de/",
   "es/",
   "favicon.ico",
-  "icons/apple-touch-icon.png",
+  "icons/app-icon-180.png",
+  "icons/app-icon-192.png",
+  "icons/app-icon-512.png",
+  "icons/app-icon-maskable-512.png",
+  "icons/app-icon.svg",
   "icons/favicon-16.png",
   "icons/favicon-32.png",
   "icons/favicon.svg",
-  "icons/icon-192.png",
-  "icons/icon-512.png",
-  "icons/icon-maskable-512.png",
   "./",
   "js/app.js",
   "js/calc.js",
